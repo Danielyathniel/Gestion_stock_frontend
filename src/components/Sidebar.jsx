@@ -42,7 +42,7 @@ export default function Sidebar() {
           aria-expanded={movementsOpen}
         >
           <span className="sidebar-dot" />
-          Types de mouvement
+          Mouvements de stock
           <span className={`sidebar-chevron${movementsOpen ? " is-open" : ""}`}>›</span>
         </button>
 
@@ -59,14 +59,6 @@ export default function Sidebar() {
             ))}
           </div>
         </div>
-
-        <NavLink
-          to="/types-mouvement"
-          className={({ isActive }) => `sidebar-link${isActive ? " is-active" : ""}`}
-        >
-          <span className="sidebar-dot" />
-          Mouvements de stock
-        </NavLink>
       </nav>
     </aside>
   );

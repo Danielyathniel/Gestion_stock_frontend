@@ -8,7 +8,6 @@ import CategoriesPage from "./pages/CategoriesPage";
 import ArticlesPage from "./pages/ArticlesPage";
 import MovementsInPage from "./pages/MovementsInPage";
 import MovementsOutPage from "./pages/MovementsOutPage";
-import MovementTypesPage from "./pages/MovementTypesPage";
 
 export default function App() {
   return (
@@ -29,7 +28,6 @@ export default function App() {
             <Route path="articles" element={<ArticlesPage />} />
             <Route path="mouvements/entrees" element={<MovementsInPage />} />
             <Route path="mouvements/sorties" element={<MovementsOutPage />} />
-            <Route path="types-mouvement" element={<MovementTypesPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

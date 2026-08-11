@@ -1,0 +1,356 @@
+.stock-in-page {
+  min-height: 100vh;
+  background: #f8fafc;
+  color: #0f172a;
+  padding: 2rem 1rem;
+}
+
+.stock-in-container {
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+/* Header */
+.stock-in-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.page-subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.stock-in-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: #059669;
+  color: #ffffff;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.stock-in-add-btn:hover {
+  background: #047857;
+}
+
+/* Confirmation */
+.stock-in-confirmation {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #a7f3d0;
+  background: #ecfdf5;
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+  font-size: 0.875rem;
+  color: #065f46;
+}
+
+.stock-in-confirmation-icon {
+  margin-top: 0.125rem;
+  color: #059669;
+  flex-shrink: 0;
+}
+
+.stock-in-confirmation-title {
+  font-weight: 500;
+  margin: 0;
+}
+
+.stock-in-confirmation-detail {
+  margin: 0.25rem 0 0;
+}
+
+.stock-in-confirmation-detail span {
+  font-weight: 600;
+}
+
+/* État vide */
+.stock-in-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 1rem;
+  background: #ffffff;
+  padding: 3rem 1.5rem;
+  color: #64748b;
+  text-align: center;
+}
+
+.stock-in-empty svg {
+  color: #94a3b8;
+}
+
+.stock-in-empty p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* Table */
+.stock-in-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: #ffffff;
+}
+
+.stock-in-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.stock-in-table thead {
+  background: #f8fafc;
+}
+
+.stock-in-table th {
+  padding: 0.625rem 1rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.stock-in-table td {
+  padding: 0.625rem 1rem;
+  border-top: 1px solid #f1f5f9;
+  color: #1e293b;
+  white-space: nowrap;
+}
+
+.stock-in-obs-cell {
+  white-space: normal;
+  color: #64748b;
+  max-width: 16rem;
+}
+
+.stock-in-qty-cell {
+  color: #047857;
+  font-weight: 500;
+}
+
+.stock-in-new-stock-cell {
+  font-weight: 600;
+}
+
+/* Modale */
+.stock-in-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 50;
+}
+
+.stock-in-modal {
+  width: 100%;
+  max-width: 40rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.stock-in-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  border-radius: 1rem 1rem 0 0;
+}
+
+.stock-in-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.stock-in-modal-close {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  padding: 0.25rem;
+  border-radius: 0.375rem;
+  transition: background 0.15s;
+}
+
+.stock-in-modal-close:hover {
+  background: #f1f5f9;
+}
+
+/* Form (à l'intérieur de la modale) */
+.stock-in-form {
+  padding: 1.5rem;
+}
+
+.stock-in-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .stock-in-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .stock-in-field--full {
+    grid-column: span 2;
+  }
+}
+
+.stock-in-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.stock-in-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+}
+
+.stock-in-label svg {
+  color: #94a3b8;
+}
+
+.stock-in-optional {
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.stock-in-input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  background: #ffffff;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.stock-in-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.stock-in-input--error {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.stock-in-textarea {
+  resize: none;
+}
+
+.stock-in-error {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0.375rem 0 0;
+  font-size: 0.75rem;
+  color: #dc2626;
+}
+
+.stock-in-hint {
+  margin: 0.375rem 0 0;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.stock-in-hint strong {
+  color: #334155;
+}
+
+.stock-in-modal-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.stock-in-cancel-btn {
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: #334155;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.stock-in-cancel-btn:hover {
+  background: #f8fafc;
+}
+
+.stock-in-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: #059669;
+  color: #ffffff;
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.stock-in-submit:hover {
+  background: #047857;
+}
+
+.stock-in-submit:active {
+  background: #065f46;
+}
