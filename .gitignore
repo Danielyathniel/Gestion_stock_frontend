@@ -1,5 +1,2 @@
 node_modules
 dist
-.env
-.DS_Store
-node_modules/ dist/ .env .vite/

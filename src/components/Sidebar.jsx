@@ -1,38 +1,73 @@
 import { NavLink } from "react-router-dom";
+import { useState } from "react";
+import "./Sidebar.css";
 
-const LINKS = [
-  { to: "/", label: "Tableau de bord", icon: "▦", end: true },
-  { to: "/categories", label: "Catégories", icon: "▤" },
-  { to: "/articles", label: "Articles", icon: "◧" },
-  { to: "/mouvements", label: "Mouvements", icon: "⇄" },
-  { to: "/rapports", label: "Rapports", icon: "▥" },
+const topLinks = [
+  { to: "/", label: "Tableau de bord", end: true },
+  { to: "/categories", label: "Catégories" },
+  { to: "/articles", label: "Articles" },
+];
+
+const movementLinks = [
+  { to: "/mouvements/entrees", label: "Entrée de stock" },
+  { to: "/mouvements/sorties", label: "Sortie de stock" },
 ];
 
 export default function Sidebar() {
+  const [movementsOpen, setMovementsOpen] = useState(true);
+
   return (
-    <aside className="sidebar no-print">
-      <div className="brand">
-        <span className="brand-mark">SF</span>
-        StockFlow
+    <aside className="sidebar">
+      <div className="sidebar-brand">
+        <span className="sidebar-brand-mark">STOCKFLOW</span>
       </div>
-      <nav className="nav-group">
-        {LINKS.map((link) => (
+
+      <nav className="sidebar-nav">
+        {topLinks.map((link) => (
           <NavLink
             key={link.to}
             to={link.to}
             end={link.end}
-            className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}
+            className={({ isActive }) => `sidebar-link${isActive ? " is-active" : ""}`}
           >
-            <span aria-hidden>{link.icon}</span>
+            <span className="sidebar-dot" />
             {link.label}
           </NavLink>
         ))}
+
+        <button
+          type="button"
+          className="sidebar-group-toggle"
+          onClick={() => setMovementsOpen((v) => !v)}
+          aria-expanded={movementsOpen}
+        >
+          <span className="sidebar-dot" />
+          Types de mouvement
+          <span className={`sidebar-chevron${movementsOpen ? " is-open" : ""}`}>›</span>
+        </button>
+
+        <div className={`sidebar-subgroup-wrap${movementsOpen ? " is-open" : ""}`}>
+          <div className="sidebar-subgroup">
+            {movementLinks.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                className={({ isActive }) => `sidebar-sublink${isActive ? " is-active" : ""}`}
+              >
+                {link.label}
+              </NavLink>
+            ))}
+          </div>
+        </div>
+
+        <NavLink
+          to="/types-mouvement"
+          className={({ isActive }) => `sidebar-link${isActive ? " is-active" : ""}`}
+        >
+          <span className="sidebar-dot" />
+          Mouvements de stock
+        </NavLink>
       </nav>
-      <div className="sidebar-footer">
-        Données simulées en local
-        <br />
-        prêtes pour l'API Laravel.
-      </div>
     </aside>
   );
 }

@@ -1,203 +1,262 @@
 import { useEffect, useMemo, useState } from "react";
-import Modal from "../components/Modal";
-import ConfirmDialog from "../components/ConfirmDialog";
-import { useToast } from "../context/ToastContext";
-import * as categoriesApi from "../api/categoriesApi";
+import "./CategoriesPage.css";
+
+const initialCategories = [
+  { id: 1, nom: "Informatique" },
+  { id: 2, nom: "Fournitures" },
+  { id: 3, nom: "Nettoyage" },
+];
+
+const EXIT_DURATION = 220; // ms — doit correspondre à la durée CSS des animations de sortie
 
 export default function CategoriesPage() {
-  const { notify } = useToast();
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState(initialCategories);
   const [search, setSearch] = useState("");
-  const [editing, setEditing] = useState(null); // null | {} | category
-  const [toDelete, setToDelete] = useState(null);
-
-  async function load() {
-    setLoading(true);
-    try {
-      setCategories(await categoriesApi.listCategories());
-    } catch (err) {
-      notify(err.message, "error");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [modal, setModal] = useState(null); // { mode, category?, closing? }
+  const [nameInput, setNameInput] = useState("");
+  const [formError, setFormError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null); // { ...category, closing? }
+  const [removingId, setRemovingId] = useState(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    load();
+    // déclenche l'animation d'entrée de la page une fois montée
+    const raf = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(raf);
   }, []);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return categories;
-    return categories.filter((c) => c.nom.toLowerCase().includes(q));
+  const filteredCategories = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return categories;
+    return categories.filter((cat) => cat.nom.toLowerCase().includes(query));
   }, [categories, search]);
 
-  async function handleDelete() {
-    try {
-      await categoriesApi.deleteCategory(toDelete.id);
-      notify("Catégorie supprimée.", "success");
-      setToDelete(null);
-      load();
-    } catch (err) {
-      notify(err.message, "error");
-      setToDelete(null);
+  function openAddModal() {
+    setNameInput("");
+    setFormError("");
+    setModal({ mode: "add" });
+  }
+
+  function openEditModal(category) {
+    setNameInput(category.nom);
+    setFormError("");
+    setModal({ mode: "edit", category });
+  }
+
+  function closeModal() {
+    setModal((prev) => (prev ? { ...prev, closing: true } : prev));
+    window.setTimeout(() => {
+      setModal(null);
+      setNameInput("");
+      setFormError("");
+    }, EXIT_DURATION);
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const trimmed = nameInput.trim();
+
+    if (!trimmed) {
+      setFormError("Le nom de la catégorie est obligatoire.");
+      return;
     }
+
+    const isDuplicate = categories.some(
+      (cat) =>
+        cat.nom.toLowerCase() === trimmed.toLowerCase() &&
+        !(modal.mode === "edit" && cat.id === modal.category.id)
+    );
+    if (isDuplicate) {
+      setFormError("Cette catégorie existe déjà.");
+      return;
+    }
+
+    if (modal.mode === "add") {
+      const nextId =
+        categories.length > 0 ? Math.max(...categories.map((c) => c.id)) + 1 : 1;
+      setCategories((prev) => [...prev, { id: nextId, nom: trimmed }]);
+    } else {
+      setCategories((prev) =>
+        prev.map((cat) =>
+          cat.id === modal.category.id ? { ...cat, nom: trimmed } : cat
+        )
+      );
+    }
+
+    closeModal();
+  }
+
+  function requestDelete(category) {
+    setDeleteTarget(category);
+  }
+
+  function closeDeleteModal() {
+    setDeleteTarget((prev) => (prev ? { ...prev, closing: true } : prev));
+    window.setTimeout(() => setDeleteTarget(null), EXIT_DURATION);
+  }
+
+  function confirmDelete() {
+    const target = deleteTarget;
+    setDeleteTarget((prev) => (prev ? { ...prev, closing: true } : prev));
+
+    window.setTimeout(() => {
+      setDeleteTarget(null);
+      setRemovingId(target.id); // déclenche l'animation de sortie de la ligne
+    }, EXIT_DURATION);
+
+    window.setTimeout(() => {
+      setCategories((prev) => prev.filter((cat) => cat.id !== target.id));
+      setRemovingId(null);
+    }, EXIT_DURATION + EXIT_DURATION);
   }
 
   return (
-    <div>
-      <div className="page-header">
-        <div>
-          <h2>Catégories</h2>
-          <p>Regroupez vos articles par famille d'inventaire.</p>
-        </div>
-        <button className="btn btn-primary" onClick={() => setEditing({})}>
-          + Ajouter une catégorie
-        </button>
-      </div>
+    <div className="categories-page">
+      <div className={`categories-content${mounted ? " is-mounted" : ""}`}>
+        <h1 className="page-title">Catégories</h1>
+        <p className="page-subtitle">Gère les familles d'articles de ton stock.</p>
 
-      <div className="filters-row">
-        <div className="search-bar">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-            <path d="M21 21l-4.3-4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          <input
-            placeholder="Rechercher une catégorie..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        <div className="categories-toolbar">
+          <div className="categories-search">
+            <span className="categories-search-icon" aria-hidden="true">⌕</span>
+            <input
+              type="text"
+              placeholder="Rechercher une catégorie…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Rechercher une catégorie"
+            />
+          </div>
+          <button type="button" className="btn btn-primary" onClick={openAddModal}>
+            + Ajouter une catégorie
+          </button>
         </div>
-      </div>
 
-      <div className="card">
-        <div className="table-wrap">
-          <table className="data-table">
+        <div className="categories-table-wrap">
+          <table className="categories-table">
             <thead>
               <tr>
-                <th>ID</th>
+                <th className="col-id">ID</th>
                 <th>Catégorie</th>
-                <th>Articles rattachés</th>
-                <th></th>
+                <th className="col-actions">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {loading && (
-                <tr>
-                  <td colSpan={4} style={{ textAlign: "center", padding: 32, color: "var(--color-ink-soft)" }}>
-                    Chargement...
+              {filteredCategories.length === 0 ? (
+                <tr className="row-enter">
+                  <td colSpan={3} className="categories-empty">
+                    {search
+                      ? "Aucune catégorie ne correspond à ta recherche."
+                      : "Aucune catégorie pour le moment. Ajoutes-en une pour commencer."}
                   </td>
                 </tr>
-              )}
-              {!loading &&
-                filtered.map((c) => (
-                  <tr key={c.id}>
-                    <td style={{ color: "var(--color-ink-soft)" }}>#{c.id}</td>
-                    <td style={{ fontWeight: 600 }}>{c.nom}</td>
-                    <td>{c.articles_count}</td>
-                    <td>
-                      <div className="row-actions">
-                        <button className="btn btn-ghost btn-sm" onClick={() => setEditing(c)}>
-                          Modifier
-                        </button>
-                        <button className="btn btn-danger btn-sm" onClick={() => setToDelete(c)}>
-                          Supprimer
-                        </button>
-                      </div>
+              ) : (
+                filteredCategories.map((cat, index) => (
+                  <tr
+                    key={cat.id}
+                    className={`row-enter${cat.id === removingId ? " row-exit" : ""}`}
+                    style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
+                  >
+                    <td className="col-id">{cat.id}</td>
+                    <td>{cat.nom}</td>
+                    <td className="col-actions">
+                      <button
+                        type="button"
+                        className="link-action"
+                        onClick={() => openEditModal(cat)}
+                      >
+                        Modifier
+                      </button>
+                      <span className="action-sep">/</span>
+                      <button
+                        type="button"
+                        className="link-action link-action-danger"
+                        onClick={() => requestDelete(cat)}
+                      >
+                        Supprimer
+                      </button>
                     </td>
                   </tr>
-                ))}
-              {!loading && filtered.length === 0 && (
-                <tr>
-                  <td colSpan={4}>
-                    <div className="empty-state">
-                      <h3>Aucune catégorie</h3>
-                      <p>Ajoutez votre première catégorie pour commencer.</p>
-                    </div>
-                  </td>
-                </tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {editing && (
-        <CategoryFormModal
-          category={editing.id ? editing : null}
-          onClose={() => setEditing(null)}
-          onSaved={() => {
-            setEditing(null);
-            load();
-          }}
-        />
+      {modal && (
+        <div
+          className={`modal-overlay${modal.closing ? " is-closing" : ""}`}
+          onClick={closeModal}
+        >
+          <div
+            className={`modal-box${modal.closing ? " is-closing" : ""}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="category-modal-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="category-modal-title" className="modal-title">
+              {modal.mode === "add" ? "Ajouter une catégorie" : "Modifier la catégorie"}
+            </h2>
+            <form onSubmit={handleSubmit}>
+              <label className="modal-label" htmlFor="category-name">
+                Nom de la catégorie
+              </label>
+              <input
+                id="category-name"
+                type="text"
+                className="modal-input"
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value)}
+                placeholder="Ex : Informatique"
+                autoFocus
+              />
+              {formError && <p className="modal-error">{formError}</p>}
+
+              <div className="modal-actions">
+                <button type="button" className="btn btn-ghost" onClick={closeModal}>
+                  Annuler
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  {modal.mode === "add" ? "Ajouter" : "Enregistrer"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
-      {toDelete && (
-        <ConfirmDialog
-          title="Supprimer la catégorie"
-          message={`Voulez-vous vraiment supprimer "${toDelete.nom}" ? Cette action est irréversible.`}
-          confirmLabel="Supprimer"
-          danger
-          onConfirm={handleDelete}
-          onCancel={() => setToDelete(null)}
-        />
+      {deleteTarget && (
+        <div
+          className={`modal-overlay${deleteTarget.closing ? " is-closing" : ""}`}
+          onClick={closeDeleteModal}
+        >
+          <div
+            className={`modal-box${deleteTarget.closing ? " is-closing" : ""}`}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-modal-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="delete-modal-title" className="modal-title">
+              Supprimer « {deleteTarget.nom} » ?
+            </h2>
+            <p className="modal-text">
+              Cette action est définitive. Les articles liés à cette catégorie
+              devront être réassignés.
+            </p>
+            <div className="modal-actions">
+              <button type="button" className="btn btn-ghost" onClick={closeDeleteModal}>
+                Annuler
+              </button>
+              <button type="button" className="btn btn-danger" onClick={confirmDelete}>
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
-  );
-}
-
-function CategoryFormModal({ category, onClose, onSaved }) {
-  const { notify } = useToast();
-  const [nom, setNom] = useState(category?.nom || "");
-  const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError("");
-    setSaving(true);
-    try {
-      if (category) {
-        await categoriesApi.updateCategory(category.id, { nom });
-        notify("Catégorie modifiée.", "success");
-      } else {
-        await categoriesApi.createCategory({ nom });
-        notify("Catégorie créée.", "success");
-      }
-      onSaved();
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  return (
-    <Modal title={category ? "Modifier la catégorie" : "Nouvelle catégorie"} onClose={onClose} width="420px">
-      <form onSubmit={handleSubmit}>
-        <div className="field">
-          <label htmlFor="nom">Nom de la catégorie</label>
-          <input
-            id="nom"
-            value={nom}
-            onChange={(e) => setNom(e.target.value)}
-            placeholder="ex : Informatique"
-            autoFocus
-            required
-          />
-        </div>
-        {error && <p className="field-error">{error}</p>}
-        <div className="form-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>
-            Annuler
-          </button>
-          <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? "Enregistrement..." : "Enregistrer"}
-          </button>
-        </div>
-      </form>
-    </Modal>
   );
 }

@@ -1,0 +1,249 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap");
+
+.login-screen {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+/* ---------- Panneau de marque (gauche) ---------- */
+
+.login-brand {
+  background: #14181b;
+  color: #f5f6f4;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px 56px;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-brand-top {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-brand-mark {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.02em;
+}
+
+.login-brand-tag {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: #8b978f;
+}
+
+.login-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 10px;
+  max-width: 340px;
+  margin: 40px 0;
+}
+
+.login-grid-cell {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: rgba(245, 246, 244, 0.06);
+  border: 1px solid rgba(245, 246, 244, 0.09);
+}
+
+.login-grid-cell.is-active {
+  background: #2e6350;
+  border-color: #3c8064;
+  animation: pulse-cell 3.2s ease-in-out infinite;
+}
+
+@keyframes pulse-cell {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.login-brand-bottom {
+  max-width: 380px;
+}
+
+.login-brand-headline {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 26px;
+  line-height: 1.3;
+  margin: 0 0 12px;
+}
+
+.login-brand-sub {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #a7b0ac;
+  margin: 0;
+}
+
+/* ---------- Panneau du formulaire (droite) ---------- */
+
+.login-panel {
+  background: #f5f6f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: #ffffff;
+  border: 1px solid #dde2df;
+  border-radius: 12px;
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 1px 2px rgba(20, 24, 27, 0.04);
+}
+
+.login-card-head h1 {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: #14181b;
+  margin: 0 0 6px;
+}
+
+.login-card-head p {
+  font-size: 14px;
+  color: #5e6a66;
+  margin: 0;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.login-field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #14181b;
+  letter-spacing: 0.01em;
+}
+
+.login-field input {
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  padding: 11px 12px;
+  border-radius: 8px;
+  border: 1px solid #dde2df;
+  background: #fbfbfa;
+  color: #14181b;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.login-field input::placeholder {
+  color: #9aa39f;
+}
+
+.login-field input:focus {
+  border-color: #2e6350;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px #e4eee9;
+}
+
+.login-password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login-password-wrap input {
+  width: 100%;
+  padding-right: 78px;
+}
+
+.login-password-toggle {
+  position: absolute;
+  right: 8px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: #2e6350;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.login-password-toggle:hover {
+  text-decoration: underline;
+}
+
+.login-message {
+  font-size: 13px;
+  margin: -6px 0 0;
+  line-height: 1.5;
+}
+
+.login-message-error {
+  color: #b23a34;
+}
+
+.login-message-notice {
+  color: #2e6350;
+}
+
+.login-submit {
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: #ffffff;
+  background: #2e6350;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.login-submit:hover:not(:disabled) {
+  background: #275546;
+}
+
+.login-submit:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 860px) {
+  .login-screen {
+    grid-template-columns: 1fr;
+  }
+
+  .login-brand {
+    padding: 32px 28px;
+  }
+
+  .login-grid {
+    max-width: 100%;
+    margin: 24px 0;
+  }
+
+  .login-brand-headline {
+    font-size: 21px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-grid-cell.is-active {
+    animation: none;
+  }
+}
