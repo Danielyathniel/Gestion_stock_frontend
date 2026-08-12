@@ -365,6 +365,10 @@
   margin-bottom: 6px;
 }
 
+.required-mark {
+  color: var(--danger, #e5484d);
+}
+
 .modal-input {
   width: 100%;
   padding: 10px 12px;

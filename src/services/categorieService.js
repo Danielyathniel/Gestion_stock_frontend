@@ -1,17 +1,39 @@
 import api from "./api";
 
-export function getCategories() {
-  return api.get("/categories").then((res) => res.data);
+function toFrontend(category) {
+  return {
+    id: category.id,
+    nom: category.nom,
+    articlesCount: category.articles_count ?? undefined,
+    dateCreation: category.created_at,
+  };
 }
 
-export function createCategorie(nom) {
-  return api.post("/categories", { nom }).then((res) => res.data);
+function toBackend(form) {
+  return {
+    nom: form.nom,
+  };
 }
 
-export function updateCategorie(id, nom) {
-  return api.put(`/categories/${id}`, { nom }).then((res) => res.data);
+export async function fetchCategories({ search = "" } = {}) {
+  const { data } = await api.get("/categories", {
+    params: {
+      search: search || undefined,
+    },
+  });
+  return data.map(toFrontend);
 }
 
-export function deleteCategorie(id) {
-  return api.delete(`/categories/${id}`);
+export async function createCategory(form) {
+  const { data } = await api.post("/categories", toBackend(form));
+  return toFrontend(data);
+}
+
+export async function updateCategory(id, form) {
+  const { data } = await api.put(`/categories/${id}`, toBackend(form));
+  return toFrontend(data);
+}
+
+export async function deleteCategory(id) {
+  await api.delete(`/categories/${id}`);
 }

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  getCategories,
-  createCategorie,
-  updateCategorie,
-  deleteCategorie,
-} from "../services/categorieService"; // adapte le chemin selon ton arborescence
+  fetchCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+} from "../services/categorieService";
 import "./CategoriesPage.css";
 
 const EXIT_DURATION = 220; // ms — doit correspondre à la durée CSS des animations de sortie
@@ -29,13 +29,13 @@ export default function CategoriesPage() {
   }, []);
 
   useEffect(() => {
-    fetchCategories();
+    loadCategories();
   }, []);
 
-  function fetchCategories() {
+  function loadCategories() {
     setIsLoading(true);
     setLoadError("");
-    getCategories()
+    fetchCategories()
       .then(setCategories)
       .catch(() => setLoadError("Impossible de charger les catégories."))
       .finally(() => setIsLoading(false));
@@ -92,10 +92,10 @@ export default function CategoriesPage() {
 
     try {
       if (modal.mode === "add") {
-        const nouvelleCategorie = await createCategorie(trimmed);
+        const nouvelleCategorie = await createCategory({ nom: trimmed });
         setCategories((prev) => [...prev, nouvelleCategorie]);
       } else {
-        const categorieModifiee = await updateCategorie(modal.category.id, trimmed);
+        const categorieModifiee = await updateCategory(modal.category.id, { nom: trimmed });
         setCategories((prev) =>
           prev.map((cat) =>
             cat.id === modal.category.id ? categorieModifiee : cat
@@ -133,7 +133,7 @@ export default function CategoriesPage() {
     }, EXIT_DURATION);
 
     try {
-      await deleteCategorie(target.id);
+      await deleteCategory(target.id);
       window.setTimeout(() => {
         setCategories((prev) => prev.filter((cat) => cat.id !== target.id));
         setRemovingId(null);

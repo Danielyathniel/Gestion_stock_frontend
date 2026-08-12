@@ -1,66 +1,29 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./ArticlesPage.css";
-
-// À terme, cette liste viendra de l'API /api/categories (partagée avec CategoriesPage)
-const categoriesList = ["Informatique", "Fournitures", "Nettoyage"];
+import {
+  fetchArticles,
+  createArticle,
+  updateArticle,
+  deleteArticle,
+} from "../services/articleService";
+import { fetchCategories } from "../services/categorieService";
 
 const UNITES = ["unité", "boîte", "paquet", "carton", "kg", "litre"];
-
-const initialArticles = [
-  {
-    id: 1,
-    reference: "ART-001",
-    nom: "Souris Logitech",
-    description: "Souris optique sans fil, USB.",
-    categorie: "Informatique",
-    prixAchat: 8000,
-    prixVente: 12000,
-    stock: 25,
-    stockMin: 10,
-    unite: "unité",
-    dateCreation: "2026-01-14",
-  },
-  {
-    id: 2,
-    reference: "ART-002",
-    nom: "Clavier HP",
-    description: "Clavier filaire AZERTY.",
-    categorie: "Informatique",
-    prixAchat: 10000,
-    prixVente: 15000,
-    stock: 0,
-    stockMin: 5,
-    unite: "unité",
-    dateCreation: "2026-01-20",
-  },
-  {
-    id: 3,
-    reference: "ART-003",
-    nom: "Papier A4",
-    description: "Ramette de 500 feuilles, 80g.",
-    categorie: "Fournitures",
-    prixAchat: 2500,
-    prixVente: 3500,
-    stock: 8,
-    stockMin: 20,
-    unite: "carton",
-    dateCreation: "2026-02-02",
-  },
-];
-
 const EXIT_DURATION = 220;
 
-const emptyForm = {
-  reference: "",
-  nom: "",
-  description: "",
-  categorie: categoriesList[0] ?? "",
-  prixAchat: "",
-  prixVente: "",
-  stock: "",
-  stockMin: "",
-  unite: UNITES[0],
-};
+function emptyForm(categoriesList) {
+  return {
+    reference: "",
+    nom: "",
+    description: "",
+    categorieId: categoriesList[0]?.id ?? "",
+    prixAchat: "",
+    prixVente: "",
+    stock: "",
+    stockMin: "",
+    unite: UNITES[0],
+  };
+}
 
 function getStockStatus(article) {
   if (article.stock <= 0) return "rupture";
@@ -78,35 +41,59 @@ function formatDate(value) {
 }
 
 export default function ArticlesPage() {
-  const [articles, setArticles] = useState(initialArticles);
+  const [articles, setArticles] = useState([]);
+  const [categoriesList, setCategoriesList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("Toutes");
   const [stockFilter, setStockFilter] = useState("Tous");
+
   const [modal, setModal] = useState(null);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(emptyForm([]));
   const [formError, setFormError] = useState("");
+  const [saving, setSaving] = useState(false);
+
   const [viewTarget, setViewTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [removingId, setRemovingId] = useState(null);
 
+  useEffect(() => {
+    loadAll();
+  }, []);
+
+  async function loadAll() {
+    setLoading(true);
+    setLoadError("");
+    try {
+      const [articlesData, categoriesData] = await Promise.all([
+        fetchArticles(),
+        fetchCategories(),
+      ]);
+      setArticles(articlesData);
+      setCategoriesList(categoriesData);
+    } catch (err) {
+      setLoadError("Impossible de charger les articles. Vérifie que l'API tourne bien.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const filteredArticles = useMemo(() => {
     const query = search.trim().toLowerCase();
-
     return articles.filter((art) => {
       const matchesSearch =
         !query ||
         art.nom.toLowerCase().includes(query) ||
         art.reference.toLowerCase().includes(query);
-
       const matchesCategory =
         categoryFilter === "Toutes" || art.categorie === categoryFilter;
-
       const status = getStockStatus(art);
       const matchesStock =
         stockFilter === "Tous" ||
         (stockFilter === "Rupture" && status === "rupture") ||
         (stockFilter === "Faible" && status === "faible");
-
       return matchesSearch && matchesCategory && matchesStock;
     });
   }, [articles, search, categoryFilter, stockFilter]);
@@ -117,7 +104,7 @@ export default function ArticlesPage() {
   );
 
   function openAddModal() {
-    setForm(emptyForm);
+    setForm(emptyForm(categoriesList));
     setFormError("");
     setModal({ mode: "add" });
   }
@@ -127,7 +114,7 @@ export default function ArticlesPage() {
       reference: article.reference,
       nom: article.nom,
       description: article.description,
-      categorie: article.categorie,
+      categorieId: article.categorieId,
       prixAchat: String(article.prixAchat),
       prixVente: String(article.prixVente),
       stock: String(article.stock),
@@ -142,7 +129,7 @@ export default function ArticlesPage() {
     setModal((prev) => (prev ? { ...prev, closing: true } : prev));
     window.setTimeout(() => {
       setModal(null);
-      setForm(emptyForm);
+      setForm(emptyForm(categoriesList));
       setFormError("");
     }, EXIT_DURATION);
   }
@@ -151,77 +138,42 @@ export default function ArticlesPage() {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
-    const reference = form.reference.trim();
-    const nom = form.nom.trim();
-
-    if (!reference || !nom || !form.categorie) {
-      setFormError("Référence, nom et catégorie sont obligatoires.");
+    if (
+      !form.reference.trim() ||
+      !form.nom.trim() ||
+      !form.description.trim() ||
+      !form.categorieId ||
+      form.stock === "" ||
+      form.stockMin === ""
+    ) {
+      setFormError("Tous les champs sont obligatoires, sauf les prix.");
       return;
     }
 
-    const prixAchat = Number(form.prixAchat);
-    const prixVente = Number(form.prixVente);
-    const stock = Number(form.stock);
-    const stockMin = Number(form.stockMin);
+    setSaving(true);
+    setFormError("");
 
-    if ([prixAchat, prixVente, stock, stockMin].some((n) => Number.isNaN(n) || n < 0)) {
-      setFormError("Les prix et les quantités doivent être des nombres positifs.");
-      return;
+    try {
+      if (modal.mode === "add") {
+        const created = await createArticle(form);
+        setArticles((prev) => [...prev, created]);
+      } else {
+        const updated = await updateArticle(modal.article.id, form);
+        setArticles((prev) =>
+          prev.map((art) => (art.id === updated.id ? updated : art))
+        );
+      }
+      closeModal();
+    } catch (err) {
+      const apiErrors = err.response?.data?.errors;
+      const firstError = apiErrors ? Object.values(apiErrors)[0]?.[0] : null;
+      setFormError(firstError || err.response?.data?.message || "Une erreur est survenue.");
+    } finally {
+      setSaving(false);
     }
-
-    const isDuplicateRef = articles.some(
-      (art) =>
-        art.reference.toLowerCase() === reference.toLowerCase() &&
-        !(modal.mode === "edit" && art.id === modal.article.id)
-    );
-    if (isDuplicateRef) {
-      setFormError("Cette référence existe déjà.");
-      return;
-    }
-
-    if (modal.mode === "add") {
-      const nextId = articles.length > 0 ? Math.max(...articles.map((a) => a.id)) + 1 : 1;
-      setArticles((prev) => [
-        ...prev,
-        {
-          id: nextId,
-          reference,
-          nom,
-          description: form.description.trim(),
-          categorie: form.categorie,
-          prixAchat,
-          prixVente,
-          stock,
-          stockMin,
-          unite: form.unite,
-          dateCreation: new Date().toISOString().slice(0, 10),
-        },
-      ]);
-    } else {
-      setArticles((prev) =>
-        prev.map((art) =>
-          art.id === modal.article.id
-            ? {
-                ...art,
-                reference,
-                nom,
-                description: form.description.trim(),
-                categorie: form.categorie,
-                prixAchat,
-                prixVente,
-                stock,
-                stockMin,
-                unite: form.unite,
-              }
-            : art
-        )
-      );
-    }
-
-    closeModal();
   }
 
   function closeViewModal() {
@@ -234,19 +186,44 @@ export default function ArticlesPage() {
     window.setTimeout(() => setDeleteTarget(null), EXIT_DURATION);
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     const target = deleteTarget;
     setDeleteTarget((prev) => (prev ? { ...prev, closing: true } : prev));
 
-    window.setTimeout(() => {
-      setDeleteTarget(null);
-      setRemovingId(target.id);
-    }, EXIT_DURATION);
+    window.setTimeout(() => setDeleteTarget(null), EXIT_DURATION);
 
-    window.setTimeout(() => {
-      setArticles((prev) => prev.filter((art) => art.id !== target.id));
-      setRemovingId(null);
-    }, EXIT_DURATION * 2);
+    try {
+      await deleteArticle(target.id);
+      setRemovingId(target.id);
+      window.setTimeout(() => {
+        setArticles((prev) => prev.filter((art) => art.id !== target.id));
+        setRemovingId(null);
+      }, EXIT_DURATION);
+    } catch (err) {
+      // si la suppression échoue côté API (ex: article lié à des mouvements),
+      // on pourrait afficher err.response.data.message ici
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="articles-page">
+        <h1 className="page-title">Articles</h1>
+        <p className="page-subtitle">Chargement…</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="articles-page">
+        <h1 className="page-title">Articles</h1>
+        <p className="page-subtitle">{loadError}</p>
+        <button type="button" className="btn btn-primary" onClick={loadAll}>
+          Réessayer
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -281,8 +258,8 @@ export default function ArticlesPage() {
         >
           <option value="Toutes">Toutes les catégories</option>
           {categoriesList.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
+            <option key={cat.id} value={cat.nom}>
+              {cat.nom}
             </option>
           ))}
         </select>
@@ -339,7 +316,6 @@ export default function ArticlesPage() {
                         type="button"
                         className="article-name-btn"
                         onClick={() => setViewTarget(art)}
-                        title="Voir les détails"
                       >
                         {art.nom}
                       </button>
@@ -354,19 +330,11 @@ export default function ArticlesPage() {
                     </td>
                     <td className="col-num">{art.stockMin}</td>
                     <td className="col-actions">
-                      <button
-                        type="button"
-                        className="link-action"
-                        onClick={() => setViewTarget(art)}
-                      >
+                      <button type="button" className="link-action" onClick={() => setViewTarget(art)}>
                         Voir
                       </button>
                       <span className="action-sep">/</span>
-                      <button
-                        type="button"
-                        className="link-action"
-                        onClick={() => openEditModal(art)}
-                      >
+                      <button type="button" className="link-action" onClick={() => openEditModal(art)}>
                         Modifier
                       </button>
                       <span className="action-sep">/</span>
@@ -387,154 +355,126 @@ export default function ArticlesPage() {
       </div>
 
       {modal && (
-        <div
-          className={`modal-overlay${modal.closing ? " is-closing" : ""}`}
-          onClick={closeModal}
-        >
+        <div className={`modal-overlay${modal.closing ? " is-closing" : ""}`} onClick={closeModal}>
           <div
             className={`modal-box modal-box-wide${modal.closing ? " is-closing" : ""}`}
             role="dialog"
             aria-modal="true"
-            aria-labelledby="article-modal-title"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="article-modal-title" className="modal-title">
+            <h2 className="modal-title">
               {modal.mode === "add" ? "Ajouter un article" : "Modifier l'article"}
             </h2>
             <form onSubmit={handleSubmit}>
               <div className="form-grid">
                 <div className="form-field">
-                  <label className="modal-label" htmlFor="art-reference">
-                    Référence / Code article
-                  </label>
+                  <label className="modal-label">Référence / Code article<span className="required-mark" aria-hidden="true"> *</span></label>
                   <input
-                    id="art-reference"
                     type="text"
                     className="modal-input"
-                    placeholder="Ex : ART-004"
                     value={form.reference}
                     onChange={(e) => updateField("reference", e.target.value)}
+                    disabled={saving}
+                    required
                     autoFocus
                   />
                 </div>
-
                 <div className="form-field">
-                  <label className="modal-label" htmlFor="art-nom">
-                    Nom
-                  </label>
+                  <label className="modal-label">Nom<span className="required-mark" aria-hidden="true"> *</span></label>
                   <input
-                    id="art-nom"
                     type="text"
                     className="modal-input"
-                    placeholder="Ex : Souris Logitech"
                     value={form.nom}
                     onChange={(e) => updateField("nom", e.target.value)}
+                    disabled={saving}
+                    required
                   />
                 </div>
-
                 <div className="form-field form-field-full">
-                  <label className="modal-label" htmlFor="art-description">
-                    Description
-                  </label>
+                  <label className="modal-label">Description<span className="required-mark" aria-hidden="true"> *</span></label>
                   <textarea
-                    id="art-description"
                     className="modal-input modal-textarea"
-                    placeholder="Détails, spécifications…"
+                    rows={2}
                     value={form.description}
                     onChange={(e) => updateField("description", e.target.value)}
-                    rows={2}
+                    disabled={saving}
+                    required
                   />
                 </div>
-
                 <div className="form-field">
-                  <label className="modal-label" htmlFor="art-categorie">
-                    Catégorie
-                  </label>
+                  <label className="modal-label">Catégorie<span className="required-mark" aria-hidden="true"> *</span></label>
                   <select
-                    id="art-categorie"
                     className="modal-input"
-                    value={form.categorie}
-                    onChange={(e) => updateField("categorie", e.target.value)}
+                    value={form.categorieId}
+                    onChange={(e) => updateField("categorieId", Number(e.target.value))}
+                    disabled={saving}
+                    required
                   >
                     {categoriesList.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
+                      <option key={cat.id} value={cat.id}>
+                        {cat.nom}
                       </option>
                     ))}
                   </select>
                 </div>
-
                 <div className="form-field">
-                  <label className="modal-label" htmlFor="art-unite">
-                    Unité
-                  </label>
+                  <label className="modal-label">Unité<span className="required-mark" aria-hidden="true"> *</span></label>
                   <select
-                    id="art-unite"
                     className="modal-input"
                     value={form.unite}
                     onChange={(e) => updateField("unite", e.target.value)}
+                    disabled={saving}
+                    required
                   >
                     {UNITES.map((u) => (
-                      <option key={u} value={u}>
-                        {u}
-                      </option>
+                      <option key={u} value={u}>{u}</option>
                     ))}
                   </select>
                 </div>
-
                 <div className="form-field">
-                  <label className="modal-label" htmlFor="art-prix-achat">
-                    Prix d'achat (FCFA)
-                  </label>
+                  <label className="modal-label">Prix d'achat (FCFA)</label>
                   <input
-                    id="art-prix-achat"
                     type="number"
                     min="0"
                     className="modal-input"
                     value={form.prixAchat}
                     onChange={(e) => updateField("prixAchat", e.target.value)}
+                    disabled={saving}
                   />
                 </div>
-
                 <div className="form-field">
-                  <label className="modal-label" htmlFor="art-prix-vente">
-                    Prix de vente (FCFA)
-                  </label>
+                  <label className="modal-label">Prix de vente (FCFA)</label>
                   <input
-                    id="art-prix-vente"
                     type="number"
                     min="0"
                     className="modal-input"
                     value={form.prixVente}
                     onChange={(e) => updateField("prixVente", e.target.value)}
+                    disabled={saving}
                   />
                 </div>
-
                 <div className="form-field">
-                  <label className="modal-label" htmlFor="art-stock">
-                    Stock actuel
-                  </label>
+                  <label className="modal-label">Stock actuel<span className="required-mark" aria-hidden="true"> *</span></label>
                   <input
-                    id="art-stock"
                     type="number"
                     min="0"
                     className="modal-input"
                     value={form.stock}
                     onChange={(e) => updateField("stock", e.target.value)}
+                    disabled={saving}
+                    required
                   />
                 </div>
-
                 <div className="form-field">
-                  <label className="modal-label" htmlFor="art-stock-min">
-                    Stock minimum
-                  </label>
+                  <label className="modal-label">Stock minimum<span className="required-mark" aria-hidden="true"> *</span></label>
                   <input
-                    id="art-stock-min"
                     type="number"
                     min="0"
                     className="modal-input"
                     value={form.stockMin}
                     onChange={(e) => updateField("stockMin", e.target.value)}
+                    disabled={saving}
+                    required
                   />
                 </div>
               </div>
@@ -542,11 +482,11 @@ export default function ArticlesPage() {
               {formError && <p className="modal-error">{formError}</p>}
 
               <div className="modal-actions">
-                <button type="button" className="btn btn-ghost" onClick={closeModal}>
+                <button type="button" className="btn btn-ghost" onClick={closeModal} disabled={saving}>
                   Annuler
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  {modal.mode === "add" ? "Ajouter" : "Enregistrer"}
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? "…" : modal.mode === "add" ? "Ajouter" : "Enregistrer"}
                 </button>
               </div>
             </form>
@@ -555,71 +495,33 @@ export default function ArticlesPage() {
       )}
 
       {viewTarget && (
-        <div
-          className={`modal-overlay${viewTarget.closing ? " is-closing" : ""}`}
-          onClick={closeViewModal}
-        >
+        <div className={`modal-overlay${viewTarget.closing ? " is-closing" : ""}`} onClick={closeViewModal}>
           <div
             className={`modal-box modal-box-wide${viewTarget.closing ? " is-closing" : ""}`}
             role="dialog"
             aria-modal="true"
-            aria-labelledby="view-modal-title"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="view-header">
-              <h2 id="view-modal-title" className="modal-title">
-                {viewTarget.nom}
-              </h2>
+              <h2 className="modal-title">{viewTarget.nom}</h2>
               <span className={`stock-badge stock-badge-${getStockStatus(viewTarget)}`}>
                 {getStockStatus(viewTarget) === "rupture" && "Rupture"}
                 {getStockStatus(viewTarget) === "faible" && "Stock faible"}
                 {getStockStatus(viewTarget) === "ok" && "En stock"}
               </span>
             </div>
-
             <dl className="view-grid">
-              <div className="view-item">
-                <dt>Référence</dt>
-                <dd>{viewTarget.reference}</dd>
-              </div>
-              <div className="view-item">
-                <dt>Catégorie</dt>
-                <dd>{viewTarget.categorie}</dd>
-              </div>
-              <div className="view-item view-item-full">
-                <dt>Description</dt>
-                <dd>{viewTarget.description || "—"}</dd>
-              </div>
-              <div className="view-item">
-                <dt>Prix d'achat</dt>
-                <dd>{formatMontant(viewTarget.prixAchat)}</dd>
-              </div>
-              <div className="view-item">
-                <dt>Prix de vente</dt>
-                <dd>{formatMontant(viewTarget.prixVente)}</dd>
-              </div>
-              <div className="view-item">
-                <dt>Stock actuel</dt>
-                <dd>
-                  {viewTarget.stock} {viewTarget.unite}
-                </dd>
-              </div>
-              <div className="view-item">
-                <dt>Stock minimum</dt>
-                <dd>
-                  {viewTarget.stockMin} {viewTarget.unite}
-                </dd>
-              </div>
-              <div className="view-item">
-                <dt>Date de création</dt>
-                <dd>{formatDate(viewTarget.dateCreation)}</dd>
-              </div>
+              <div className="view-item"><dt>Référence</dt><dd>{viewTarget.reference}</dd></div>
+              <div className="view-item"><dt>Catégorie</dt><dd>{viewTarget.categorie}</dd></div>
+              <div className="view-item view-item-full"><dt>Description</dt><dd>{viewTarget.description || "—"}</dd></div>
+              <div className="view-item"><dt>Prix d'achat</dt><dd>{formatMontant(viewTarget.prixAchat)}</dd></div>
+              <div className="view-item"><dt>Prix de vente</dt><dd>{formatMontant(viewTarget.prixVente)}</dd></div>
+              <div className="view-item"><dt>Stock actuel</dt><dd>{viewTarget.stock} {viewTarget.unite}</dd></div>
+              <div className="view-item"><dt>Stock minimum</dt><dd>{viewTarget.stockMin} {viewTarget.unite}</dd></div>
+              <div className="view-item"><dt>Date de création</dt><dd>{formatDate(viewTarget.dateCreation)}</dd></div>
             </dl>
-
             <div className="modal-actions">
-              <button type="button" className="btn btn-ghost" onClick={closeViewModal}>
-                Fermer
-              </button>
+              <button type="button" className="btn btn-ghost" onClick={closeViewModal}>Fermer</button>
               <button
                 type="button"
                 className="btn btn-primary"
@@ -636,30 +538,20 @@ export default function ArticlesPage() {
       )}
 
       {deleteTarget && (
-        <div
-          className={`modal-overlay${deleteTarget.closing ? " is-closing" : ""}`}
-          onClick={closeDeleteModal}
-        >
+        <div className={`modal-overlay${deleteTarget.closing ? " is-closing" : ""}`} onClick={closeDeleteModal}>
           <div
             className={`modal-box${deleteTarget.closing ? " is-closing" : ""}`}
             role="alertdialog"
             aria-modal="true"
-            aria-labelledby="delete-modal-title"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="delete-modal-title" className="modal-title">
-              Supprimer « {deleteTarget.nom} » ?
-            </h2>
+            <h2 className="modal-title">Supprimer « {deleteTarget.nom} » ?</h2>
             <p className="modal-text">
               Cette action est définitive et retirera cet article de ton inventaire.
             </p>
             <div className="modal-actions">
-              <button type="button" className="btn btn-ghost" onClick={closeDeleteModal}>
-                Annuler
-              </button>
-              <button type="button" className="btn btn-danger" onClick={confirmDelete}>
-                Supprimer
-              </button>
+              <button type="button" className="btn btn-ghost" onClick={closeDeleteModal}>Annuler</button>
+              <button type="button" className="btn btn-danger" onClick={confirmDelete}>Supprimer</button>
             </div>
           </div>
         </div>
