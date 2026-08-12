@@ -11,7 +11,7 @@
   background-attachment: fixed;
 }
 
-/* ---------- Entrée de la page ---------- */
+
 
 .categories-content {
   position: relative;
@@ -296,6 +296,15 @@
   box-shadow: 0 20px 45px rgba(20, 24, 27, 0.18);
   animation: modalIn 0.22s cubic-bezier(0.2, 0.8, 0.3, 1) both;
 }
+.modal-success {
+  color: #16a34a;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
 
 .modal-box.is-closing {
   animation: modalOut 0.2s ease both;
@@ -397,4 +406,5 @@
     animation: none !important;
     transition: none !important;
   }
+  
 }
