@@ -1,27 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  fetchCategories,
-  createCategory,
-  updateCategory,
-  deleteCategory,
+  getCategories,
+  createCategorie,
+  updateCategorie,
+  deleteCategorie,
 } from "../services/categorieService";
 import "./CategoriesPage.css";
 
-const EXIT_DURATION = 220; // ms — doit correspondre à la durée CSS des animations de sortie
+const EXIT_DURATION = 220;
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [search, setSearch] = useState("");
-  const [modal, setModal] = useState(null); // { mode, category?, closing? }
+  const [modal, setModal] = useState(null);
   const [nameInput, setNameInput] = useState("");
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState(null); // { ...category, closing? }
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [removingId, setRemovingId] = useState(null);
   const [mounted, setMounted] = useState(false);
   const [pageError, setPageError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setMounted(true));
@@ -39,6 +40,11 @@ export default function CategoriesPage() {
       .then(setCategories)
       .catch(() => setLoadError("Impossible de charger les catégories."))
       .finally(() => setIsLoading(false));
+  }
+
+  function showSuccess(message) {
+    setSuccessMessage(message);
+    window.setTimeout(() => setSuccessMessage(""), 3000);
   }
 
   const filteredCategories = useMemo(() => {
@@ -76,14 +82,14 @@ export default function CategoriesPage() {
       setFormError("Le nom de la catégorie est obligatoire.");
       return;
     }
-// Vérifier les doublons 
-     const isDuplicate = categories.some(
+
+    const isDuplicate = categories.some(
       (cat) =>
         cat.nom.toLowerCase() === trimmed.toLowerCase() && cat.id !== modal.category?.id
     );
 
     if (isDuplicate) {
-      setFormError("Une catégorie existe déjà.");
+      setFormError("Cette catégorie existe déjà.");
       return;
     }
 
@@ -94,6 +100,7 @@ export default function CategoriesPage() {
       if (modal.mode === "add") {
         const nouvelleCategorie = await createCategory({ nom: trimmed });
         setCategories((prev) => [...prev, nouvelleCategorie]);
+        showSuccess("Catégorie ajoutée avec succès.");
       } else {
         const categorieModifiee = await updateCategory(modal.category.id, { nom: trimmed });
         setCategories((prev) =>
@@ -101,6 +108,7 @@ export default function CategoriesPage() {
             cat.id === modal.category.id ? categorieModifiee : cat
           )
         );
+        showSuccess("Modification enregistrée.");
       }
       closeModal();
     } catch (err) {
@@ -137,12 +145,13 @@ export default function CategoriesPage() {
       window.setTimeout(() => {
         setCategories((prev) => prev.filter((cat) => cat.id !== target.id));
         setRemovingId(null);
+        showSuccess("Catégorie supprimée avec succès.");
       }, EXIT_DURATION);
-    } catch (err){
+    } catch (err) {
       setRemovingId(null);
-      setPageError( 
-        err.response?.data?.message || 
-        "La suppression a échoué. Vérifie que la catégorie n'est pas utilisée par des articles."
+      setPageError(
+        err.response?.data?.message ||
+          "La suppression a échoué. Vérifie que la catégorie n'est pas utilisée par des articles."
       );
     }
   }
@@ -152,8 +161,10 @@ export default function CategoriesPage() {
       <div className={`categories-content${mounted ? " is-mounted" : ""}`}>
         <h1 className="page-title">Catégories</h1>
         <p className="page-subtitle">Gère les familles d'articles de ton stock.</p>
- 
-          {pageError && <p className="modal-error">{pageError}</p>}
+
+        {pageError && <p className="modal-error">{pageError}</p>}
+        {successMessage && <p className="modal-success">{successMessage}</p>}
+
         <div className="categories-toolbar">
           <div className="categories-search">
             <span className="categories-search-icon" aria-hidden="true">⌕</span>
@@ -207,7 +218,7 @@ export default function CategoriesPage() {
                     className={`row-enter${cat.id === removingId ? " row-exit" : ""}`}
                     style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
                   >
-                    <td className="col-id">{cat.id}</td>
+                    <td className="col-id">{index + 1}</td>
                     <td>{cat.nom}</td>
                     <td className="col-actions">
                       <button
