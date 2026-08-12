@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import authService from "../services/authService";
 import "./LoginPage.css";
 
 const GRID_SIZE = 48;
-// Une poignée de casiers "actifs" pour l'effet de grille vivante — valeurs figées
-// pour que l'animation soit stable d'un rendu à l'autre.
+
 const ACTIVE_CELLS = new Set([2, 5, 9, 14, 17, 22, 27, 31, 33, 38, 41, 45]);
 
 export default function LoginPage() {
@@ -18,7 +18,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
     if (!email.trim() || !password.trim()) {
@@ -33,14 +33,22 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    // Toujours pas de vraie vérification de mot de passe contre un
-    // backend — ça viendra plus tard. Pour l'instant on "connecte"
-    // l'utilisateur avec l'email saisi et on file vers le tableau de bord.
-    setTimeout(() => {
-      setLoading(false);
-      login(email);
+ 
+   try {
+  const result = await authService.login(email, password);
+
+    if (result.success) {
+      login(result.user);
       navigate("/");
-    }, 900);
+    } else {
+      setError(result.message || "Email ou mot de passe incorrect");
+    }
+  } catch (err) {
+    setError("Erreur de connexion. Vérifie que le serveur est démarré.");
+    console.error("Erreur:", err);
+  } finally {
+    setLoading(false);
+  }
   }
 
   return (

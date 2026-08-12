@@ -1,29 +1,45 @@
 import { useEffect, useMemo, useState } from "react";
+import {
+  getCategories,
+  createCategorie,
+  updateCategorie,
+  deleteCategorie,
+} from "../services/categorieService"; // adapte le chemin selon ton arborescence
 import "./CategoriesPage.css";
-
-const initialCategories = [
-  { id: 1, nom: "Informatique" },
-  { id: 2, nom: "Fournitures" },
-  { id: 3, nom: "Nettoyage" },
-];
 
 const EXIT_DURATION = 220; // ms — doit correspondre à la durée CSS des animations de sortie
 
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState(initialCategories);
+  const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState(null); // { mode, category?, closing? }
   const [nameInput, setNameInput] = useState("");
   const [formError, setFormError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null); // { ...category, closing? }
   const [removingId, setRemovingId] = useState(null);
   const [mounted, setMounted] = useState(false);
+  const [pageError, setPageError] = useState("");
 
   useEffect(() => {
-    // déclenche l'animation d'entrée de la page une fois montée
     const raf = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(raf);
   }, []);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  function fetchCategories() {
+    setIsLoading(true);
+    setLoadError("");
+    getCategories()
+      .then(setCategories)
+      .catch(() => setLoadError("Impossible de charger les catégories."))
+      .finally(() => setIsLoading(false));
+  }
 
   const filteredCategories = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -52,7 +68,7 @@ export default function CategoriesPage() {
     }, EXIT_DURATION);
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     const trimmed = nameInput.trim();
 
@@ -60,30 +76,42 @@ export default function CategoriesPage() {
       setFormError("Le nom de la catégorie est obligatoire.");
       return;
     }
-
-    const isDuplicate = categories.some(
+// Vérifier les doublons 
+     const isDuplicate = categories.some(
       (cat) =>
-        cat.nom.toLowerCase() === trimmed.toLowerCase() &&
-        !(modal.mode === "edit" && cat.id === modal.category.id)
+        cat.nom.toLowerCase() === trimmed.toLowerCase() && cat.id !== modal.category?.id
     );
+
     if (isDuplicate) {
-      setFormError("Cette catégorie existe déjà.");
+      setFormError("Une catégorie existe déjà.");
       return;
     }
 
-    if (modal.mode === "add") {
-      const nextId =
-        categories.length > 0 ? Math.max(...categories.map((c) => c.id)) + 1 : 1;
-      setCategories((prev) => [...prev, { id: nextId, nom: trimmed }]);
-    } else {
-      setCategories((prev) =>
-        prev.map((cat) =>
-          cat.id === modal.category.id ? { ...cat, nom: trimmed } : cat
-        )
-      );
-    }
+    setIsSubmitting(true);
+    setFormError("");
 
-    closeModal();
+    try {
+      if (modal.mode === "add") {
+        const nouvelleCategorie = await createCategorie(trimmed);
+        setCategories((prev) => [...prev, nouvelleCategorie]);
+      } else {
+        const categorieModifiee = await updateCategorie(modal.category.id, trimmed);
+        setCategories((prev) =>
+          prev.map((cat) =>
+            cat.id === modal.category.id ? categorieModifiee : cat
+          )
+        );
+      }
+      closeModal();
+    } catch (err) {
+      const apiMessage =
+        err.response?.data?.errors?.nom?.[0] ||
+        err.response?.data?.message ||
+        "Une erreur est survenue, réessaie.";
+      setFormError(apiMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function requestDelete(category) {
@@ -95,19 +123,28 @@ export default function CategoriesPage() {
     window.setTimeout(() => setDeleteTarget(null), EXIT_DURATION);
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     const target = deleteTarget;
     setDeleteTarget((prev) => (prev ? { ...prev, closing: true } : prev));
 
     window.setTimeout(() => {
       setDeleteTarget(null);
-      setRemovingId(target.id); // déclenche l'animation de sortie de la ligne
+      setRemovingId(target.id);
     }, EXIT_DURATION);
 
-    window.setTimeout(() => {
-      setCategories((prev) => prev.filter((cat) => cat.id !== target.id));
+    try {
+      await deleteCategorie(target.id);
+      window.setTimeout(() => {
+        setCategories((prev) => prev.filter((cat) => cat.id !== target.id));
+        setRemovingId(null);
+      }, EXIT_DURATION);
+    } catch (err){
       setRemovingId(null);
-    }, EXIT_DURATION + EXIT_DURATION);
+      setPageError( 
+        err.response?.data?.message || 
+        "La suppression a échoué. Vérifie que la catégorie n'est pas utilisée par des articles."
+      );
+    }
   }
 
   return (
@@ -115,7 +152,8 @@ export default function CategoriesPage() {
       <div className={`categories-content${mounted ? " is-mounted" : ""}`}>
         <h1 className="page-title">Catégories</h1>
         <p className="page-subtitle">Gère les familles d'articles de ton stock.</p>
-
+ 
+          {pageError && <p className="modal-error">{pageError}</p>}
         <div className="categories-toolbar">
           <div className="categories-search">
             <span className="categories-search-icon" aria-hidden="true">⌕</span>
@@ -142,7 +180,19 @@ export default function CategoriesPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredCategories.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={3} className="categories-empty">
+                    Chargement des catégories…
+                  </td>
+                </tr>
+              ) : loadError ? (
+                <tr>
+                  <td colSpan={3} className="categories-empty">
+                    {loadError}
+                  </td>
+                </tr>
+              ) : filteredCategories.length === 0 ? (
                 <tr className="row-enter">
                   <td colSpan={3} className="categories-empty">
                     {search
@@ -218,8 +268,12 @@ export default function CategoriesPage() {
                 <button type="button" className="btn btn-ghost" onClick={closeModal}>
                   Annuler
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  {modal.mode === "add" ? "Ajouter" : "Enregistrer"}
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                  {isSubmitting
+                    ? "Enregistrement…"
+                    : modal.mode === "add"
+                    ? "Ajouter"
+                    : "Enregistrer"}
                 </button>
               </div>
             </form>
