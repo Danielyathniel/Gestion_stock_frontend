@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  getCategories,
-  createCategorie,
-  updateCategorie,
-  deleteCategorie,
+  fetchCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
 } from "../services/categorieService";
 import "./CategoriesPage.css";
 
