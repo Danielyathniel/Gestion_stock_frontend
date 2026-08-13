@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { fetchEntrees, fetchTypeMouvements, createEntree } from "../services/mouvements_stock/mouvementInService";
 import {
   Package,
   ArrowDownToLine,
@@ -9,29 +10,12 @@ import {
   Plus,
   X,
   Inbox,
+  Eye,
 } from "lucide-react";
 import "./MovementsInPage.css";
+import { fetchArticles } from "../services/articleService";
 
-// --- Données mock (à remplacer par un appel API plus tard) ---
-const initialArticles = [
-  { id: 1, nom: "Souris Logitech", reference: "LOG-MS-001", stock: 25 },
-  { id: 2, nom: "Clavier mécanique Redragon", reference: "RDG-KB-014", stock: 12 },
-  { id: 3, nom: "Écran Dell 24\"", reference: "DEL-MN-024", stock: 8 },
-  { id: 4, nom: "Câble HDMI 2m", reference: "CBL-HD-002", stock: 40 },
-  { id: 5, nom: "Disque SSD 1To", reference: "SSD-1TB-01", stock: 5 },
-];
 
-const initialMouvements = [
-  {
-    id: 1,
-    article: "Souris Logitech",
-    quantite: 10,
-    date: "2026-08-05",
-    motif: "Achat fournisseur",
-    observation: "",
-    nouveauStock: 25,
-  },
-];
 
 const motifs = [
   "Achat fournisseur",
@@ -52,22 +36,59 @@ const emptyForm = {
 };
 
 export default function MovementsInPage() {
-  const [articles, setArticles] = useState(initialArticles);
-  const [mouvements, setMouvements] = useState(initialMouvements);
+  const [articles, setArticles] = useState([]);
+  const [mouvements, setMouvements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [typeMouvements, setTypeMouvements] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [confirmation, setConfirmation] = useState(null);
+  const [viewedMouvement, setViewedMouvement] = useState(null);
 
   const selectedArticle = articles.find(
     (a) => String(a.id) === String(form.articleId)
   );
 
+  useEffect(() => {
+  loadAll();
+}, []);
+
+async function loadAll() {
+  setLoading(true);
+  setLoadError("");
+  try {
+    const [articlesData, mouvementsData, typesData] = await Promise.all([
+      fetchArticles(),
+      fetchEntrees(),
+      fetchTypeMouvements(),
+    ]);
+    setArticles(articlesData);
+    setMouvements(mouvementsData);
+    setTypeMouvements(typesData);
+  } catch {
+    setLoadError("Impossible de charger les données. Vérifie que l'API tourne bien.");
+  } finally {
+    setLoading(false);
+  }
+}
+
   function openForm() {
     setForm(emptyForm);
     setErrors({});
     setShowForm(true);
+  }
+
+  function openView(mouvement) {
+    setViewedMouvement(mouvement);
+  }
+
+  function closeView() {
+    setViewedMouvement(null);
   }
 
   function closeForm() {
@@ -92,31 +113,37 @@ export default function MovementsInPage() {
     return Object.keys(e).length === 0;
   }
 
-  function handleSubmit(evt) {
-    evt.preventDefault();
-    if (!validate()) return;
+async function handleSubmit(evt) {
+  evt.preventDefault();
+  if (!validate()) return;
 
-    const qte = Number(form.quantite);
-    const article = articles.find((a) => String(a.id) === String(form.articleId));
-    const ancienStock = article.stock;
-    const nouveauStock = ancienStock + qte;
+  const qte = Number(form.quantite);
+  const article = articles.find((a) => String(a.id) === String(form.articleId));
+  const typeEntree = typeMouvements.find((t) => t.code === "IN");
+  const ancienStock = article.stock;
 
+  setSaving(true);
+  setSubmitError("");
+  try {
+    const created = await createEntree({
+      articleId: form.articleId,
+      typeMouvementId: typeEntree.id,
+      quantite: qte,
+      date: form.date,
+      motif: form.motif,
+      observation: form.observation,
+    });
+
+    // 1. Le stock actuel du serveur arrive avec la réponse
+    const nouveauStock = created.stockActuel;
+
+    // 2. Met à jour la liste des articles (select + hint)
     setArticles((list) =>
       list.map((a) => (a.id === article.id ? { ...a, stock: nouveauStock } : a))
     );
 
-    setMouvements((m) => [
-      {
-        id: Date.now(),
-        article: article.nom,
-        quantite: qte,
-        date: form.date,
-        motif: form.motif,
-        observation: form.observation,
-        nouveauStock,
-      },
-      ...m,
-    ]);
+    // 3. Ajoute le mouvement reçu en haut de la liste
+    setMouvements((m) => [created, ...m]);
 
     setConfirmation({
       article: article.nom,
@@ -126,10 +153,14 @@ export default function MovementsInPage() {
     });
 
     setShowForm(false);
-
-    // Le message de confirmation se referme tout seul après un moment
+    setForm(emptyForm);
     setTimeout(() => setConfirmation(null), 5000);
+  } catch (err) {
+    setSubmitError(err.response?.data?.message || "Erreur lors de l'enregistrement.");
+  } finally {
+    setSaving(false);
   }
+}
 
   return (
     <div className="stock-in-page">
@@ -163,7 +194,19 @@ export default function MovementsInPage() {
         )}
 
         {/* Liste des mouvements */}
-        {mouvements.length === 0 ? (
+        {loading ? (
+          <div className="stock-in-empty">
+            <p>Chargement des entrées…</p>
+          </div>
+        ) : loadError ? (
+          <div className="stock-in-empty">
+            <AlertCircle size={28} />
+            <p>{loadError}</p>
+            <button type="button" className="stock-in-add-btn" onClick={loadAll}>
+              Réessayer
+            </button>
+          </div>
+        ) : mouvements.length === 0 ? (
           <div className="stock-in-empty">
             <Inbox size={28} />
             <p>Aucun mouvement d'entrée enregistré pour l'instant.</p>
@@ -183,6 +226,7 @@ export default function MovementsInPage() {
                   <th>Motif</th>
                   <th>Observation</th>
                   <th>Nouveau stock</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -193,11 +237,98 @@ export default function MovementsInPage() {
                     <td>{m.date}</td>
                     <td>{m.motif}</td>
                     <td className="stock-in-obs-cell">{m.observation || "—"}</td>
-                    <td className="stock-in-new-stock-cell">{m.nouveauStock}</td>
+                    <td className="stock-in-new-stock-cell">{m.stockActuel}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="stock-in-view-btn"
+                        onClick={() => openView(m)}
+                      >
+                        <Eye size={15} />
+                        Voir
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Modale de détail d'une entrée */}
+        {viewedMouvement && (
+          <div className="stock-in-modal-overlay" onClick={closeView}>
+            <div
+              className="stock-in-modal"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="stock-in-modal-header">
+                <h2 className="stock-in-modal-title">
+                  <Eye size={18} />
+                  Détail de l'entrée
+                </h2>
+                <button
+                  type="button"
+                  className="stock-in-modal-close"
+                  onClick={closeView}
+                  aria-label="Fermer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="stock-in-details">
+                <div className="stock-in-details-item">
+                  <span className="stock-in-details-label">Article</span>
+                  <span className="stock-in-details-value">
+                    {viewedMouvement.article}
+                    {viewedMouvement.articleReference && (
+                      <span className="stock-in-details-sub">
+                        réf. {viewedMouvement.articleReference}
+                      </span>
+                    )}
+                  </span>
+                </div>
+
+                <div className="stock-in-details-item">
+                  <span className="stock-in-details-label">Quantité entrée</span>
+                  <span className="stock-in-details-value">
+                    +{viewedMouvement.quantite}
+                  </span>
+                </div>
+
+                <div className="stock-in-details-item">
+                  <span className="stock-in-details-label">Date</span>
+                  <span className="stock-in-details-value">{viewedMouvement.date}</span>
+                </div>
+
+                <div className="stock-in-details-item">
+                  <span className="stock-in-details-label">Motif</span>
+                  <span className="stock-in-details-value">{viewedMouvement.motif}</span>
+                </div>
+
+                <div className="stock-in-details-item">
+                  <span className="stock-in-details-label">Observation</span>
+                  <span className="stock-in-details-value">
+                    {viewedMouvement.observation || "—"}
+                  </span>
+                </div>
+
+                <div className="stock-in-details-item">
+                  <span className="stock-in-details-label">Nouveau stock</span>
+                  <span className="stock-in-details-value stock-in-details-value--stock">
+                    {viewedMouvement.stockActuel} unités
+                  </span>
+                </div>
+
+                {viewedMouvement.user && (
+                  <div className="stock-in-details-item">
+                    <span className="stock-in-details-label">Enregistré par</span>
+                    <span className="stock-in-details-value">{viewedMouvement.user}</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -330,13 +461,19 @@ export default function MovementsInPage() {
                   </div>
                 </div>
 
+                {submitError && (
+                  <p className="stock-in-error">
+                    <AlertCircle size={12} /> {submitError}
+                  </p>
+                )}
+
                 <div className="stock-in-modal-actions">
-                  <button type="button" className="stock-in-cancel-btn" onClick={closeForm}>
+                  <button type="button" className="stock-in-cancel-btn" onClick={closeForm} disabled={saving}>
                     Annuler
                   </button>
-                  <button type="submit" className="stock-in-submit">
+                  <button type="submit" className="stock-in-submit" disabled={saving}>
                     <ArrowDownToLine size={16} />
-                    Enregistrer l'entrée
+                    {saving ? "Enregistrement…" : "Enregistrer l'entrée"}
                   </button>
                 </div>
               </form>
