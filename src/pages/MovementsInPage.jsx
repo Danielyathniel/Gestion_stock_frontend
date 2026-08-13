@@ -134,15 +134,11 @@ async function handleSubmit(evt) {
       observation: form.observation,
     });
 
-    // 1. Le stock actuel du serveur arrive avec la réponse
-    const nouveauStock = created.stockActuel;
+    // Le stock de l'article ne change pas : le nouveau stock est un simple
+    // calcul d'affichage = stock actuel de l'article + quantité
+    const nouveauStock = article.stock + qte;
 
-    // 2. Met à jour la liste des articles (select + hint)
-    setArticles((list) =>
-      list.map((a) => (a.id === article.id ? { ...a, stock: nouveauStock } : a))
-    );
-
-    // 3. Ajoute le mouvement reçu en haut de la liste
+    // Ajoute le mouvement reçu en haut de la liste
     setMouvements((m) => [created, ...m]);
 
     setConfirmation({
@@ -237,7 +233,9 @@ async function handleSubmit(evt) {
                     <td>{m.date}</td>
                     <td>{m.motif}</td>
                     <td className="stock-in-obs-cell">{m.observation || "—"}</td>
-                    <td className="stock-in-new-stock-cell">{m.stockActuel}</td>
+                    <td className="stock-in-new-stock-cell">
+                      {m.stockActuel + m.quantite}
+                    </td>
                     <td>
                       <button
                         type="button"
@@ -317,7 +315,7 @@ async function handleSubmit(evt) {
                 <div className="stock-in-details-item">
                   <span className="stock-in-details-label">Nouveau stock</span>
                   <span className="stock-in-details-value stock-in-details-value--stock">
-                    {viewedMouvement.stockActuel} unités
+                    {viewedMouvement.stockActuel + viewedMouvement.quantite} unités
                   </span>
                 </div>
 
