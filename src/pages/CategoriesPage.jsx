@@ -44,8 +44,12 @@ export default function CategoriesPage() {
 
   function showSuccess(message) {
     setSuccessMessage(message);
-    window.setTimeout(() => setSuccessMessage(""), 3000);
+    window.setTimeout(() => setSuccessMessage(""), 2000);
   }
+  function showPageError(message) {
+  setPageError(message);
+  window.setTimeout(() => setPageError(""), 2000);
+}
 
   const filteredCategories = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -149,7 +153,7 @@ export default function CategoriesPage() {
       }, EXIT_DURATION);
     } catch (err) {
       setRemovingId(null);
-      setPageError(
+      showPageError(
         err.response?.data?.message ||
           "La suppression a échoué. Vérifie que la catégorie n'est pas utilisée par des articles."
       );
@@ -162,7 +166,7 @@ export default function CategoriesPage() {
         <h1 className="page-title">Catégories</h1>
         <p className="page-subtitle">Gère les familles d'articles de ton stock.</p>
 
-        {pageError && <p className="modal-error">{pageError}</p>}
+        {pageError && <p className="page-error">{pageError}</p>}
         {successMessage && <p className="modal-success">{successMessage}</p>}
 
         <div className="categories-toolbar">

@@ -305,6 +305,15 @@
   margin-bottom: 16px;
   font-size: 14px;
 }
+.page-error {
+  color: var(--danger);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
 
 .modal-box.is-closing {
   animation: modalOut 0.2s ease both;
