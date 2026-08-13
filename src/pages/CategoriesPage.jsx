@@ -89,7 +89,7 @@ export default function CategoriesPage() {
     );
 
     if (isDuplicate) {
-      setFormError("Cette catégorie existe déjà.");
+      setFormError("Une catégorie existe déjà.");
       return;
     }
 
