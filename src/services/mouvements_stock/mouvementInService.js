@@ -5,12 +5,13 @@ function toFrontend(mouvement) {
         id: mouvement.id,
         article: mouvement.article?.nom ?? "",
         articleReference: mouvement.article?.reference ?? "",
+        articleUnite: mouvement.article?.unite ?? "unité(s)",
         articleId: mouvement.article_id,
         quantite: mouvement.quantite,
         date: mouvement.date_mouvement,
         motif: mouvement.motif,
         observation: mouvement.observation ?? "",
-        stockActuel: mouvement.article?.stock_actuel ?? 0,
+        stockActuel: mouvement.stock_apres_mouvement ?? 0,
         user: mouvement.user?.name ?? "",
     };
 }

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { fetchSorties, fetchTypeMouvements, createSortie } from "../services/mouvements_stock/mouvementOutService";
 import {
   Package,
   ArrowUpFromLine,
@@ -9,29 +10,10 @@ import {
   Plus,
   X,
   Inbox,
+  Eye,
 } from "lucide-react";
 import "./MovementsOutPage.css";
-
-// --- Données locales (à remplacer par un appel API plus tard) ---
-const initialArticles = [
-  { id: 1, nom: "Souris Logitech", reference: "LOG-MS-001", stock: 25 },
-  { id: 2, nom: "Clavier mécanique Redragon", reference: "RDG-KB-014", stock: 12 },
-  { id: 3, nom: "Écran Dell 24\"", reference: "DEL-MN-024", stock: 8 },
-  { id: 4, nom: "Câble HDMI 2m", reference: "CBL-HD-002", stock: 40 },
-  { id: 5, nom: "Disque SSD 1To", reference: "SSD-1TB-01", stock: 5 },
-];
-
-const initialMouvements = [
-  {
-    id: 1,
-    article: "Clavier mécanique Redragon",
-    quantite: 3,
-    date: "2026-08-06",
-    motif: "Vente",
-    observation: "",
-    nouveauStock: 12,
-  },
-];
+import { fetchArticles } from "../services/articleService";
 
 const motifs = [
   "Vente",
@@ -52,22 +34,59 @@ const emptyForm = {
 };
 
 export default function MovementsOutPage() {
-  const [articles, setArticles] = useState(initialArticles);
-  const [mouvements, setMouvements] = useState(initialMouvements);
+  const [articles, setArticles] = useState([]);
+  const [mouvements, setMouvements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [typeMouvements, setTypeMouvements] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [confirmation, setConfirmation] = useState(null);
+  const [viewedMouvement, setViewedMouvement] = useState(null);
 
   const selectedArticle = articles.find(
     (a) => String(a.id) === String(form.articleId)
   );
 
+  useEffect(() => {
+    loadAll();
+  }, []);
+
+  async function loadAll() {
+    setLoading(true);
+    setLoadError("");
+    try {
+      const [articlesData, mouvementsData, typesData] = await Promise.all([
+        fetchArticles(),
+        fetchSorties(),
+        fetchTypeMouvements(),
+      ]);
+      setArticles(articlesData);
+      setMouvements(mouvementsData);
+      setTypeMouvements(typesData);
+    } catch {
+      setLoadError("Impossible de charger les données. Vérifie que l'API tourne bien.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function openForm() {
-    setForm(emptyForm);
+    setForm({ ...emptyForm, date: todayISO() });
     setErrors({});
     setShowForm(true);
+  }
+
+  function openView(mouvement) {
+    setViewedMouvement(mouvement);
+  }
+
+  function closeView() {
+    setViewedMouvement(null);
   }
 
   function closeForm() {
@@ -81,66 +100,73 @@ export default function MovementsOutPage() {
 
   function validate() {
     const e = {};
-    const article = articles.find((a) => String(a.id) === String(form.articleId));
-
     if (!form.articleId) e.articleId = "Sélectionne un article.";
-
     const qte = Number(form.quantite);
-    if (!form.quantite) {
-      e.quantite = "Indique une quantité.";
-    } else if (!Number.isFinite(qte) || qte <= 0) {
+    if (!form.quantite) e.quantite = "Indique une quantité.";
+    else if (!Number.isFinite(qte) || qte <= 0)
       e.quantite = "La quantité doit être un nombre positif.";
-    } else if (article && qte > article.stock) {
-      e.quantite = `Stock insuffisant (disponible : ${article.stock}).`;
-    }
-
+    else if (selectedArticle && qte > selectedArticle.stock)
+      e.quantite = `Stock insuffisant. Disponible : ${selectedArticle.stock}`;
     if (!form.date) e.date = "Indique une date.";
     if (!form.motif) e.motif = "Sélectionne un motif.";
     setErrors(e);
     return Object.keys(e).length === 0;
   }
 
-  function handleSubmit(evt) {
+  async function handleSubmit(evt) {
     evt.preventDefault();
     if (!validate()) return;
 
     const qte = Number(form.quantite);
     const article = articles.find((a) => String(a.id) === String(form.articleId));
+    const typeSortie = typeMouvements.find((t) => t.code === "OUT");
     const ancienStock = article.stock;
-    const nouveauStock = ancienStock - qte;
 
-    setArticles((list) =>
-      list.map((a) => (a.id === article.id ? { ...a, stock: nouveauStock } : a))
-    );
-
-    setMouvements((m) => [
-      {
-        id: Date.now(),
-        article: article.nom,
+    setSaving(true);
+    setSubmitError("");
+    try {
+      const created = await createSortie({
+        articleId: form.articleId,
+        typeMouvementId: typeSortie.id,
         quantite: qte,
         date: form.date,
         motif: form.motif,
         observation: form.observation,
+      });
+
+      // 🔴 1. CALCUL : STOCK - QUANTITÉ (SORTIE)
+      const nouveauStock = article.stock - qte;
+
+      setMouvements((m) => [created, ...m]);
+
+      // 🔴 2. METTRE À JOUR LE STOCK DANS LA LISTE
+      setArticles((prev) =>
+        prev.map((a) =>
+          a.id === article.id ? { ...a, stock: nouveauStock } : a
+        )
+      );
+
+      setConfirmation({
+        article: article.nom,
+        ancienStock,
         nouveauStock,
-      },
-      ...m,
-    ]);
+        quantite: qte,
+      });
 
-    setConfirmation({
-      article: article.nom,
-      ancienStock,
-      nouveauStock,
-      quantite: qte,
-    });
-
-    setShowForm(false);
-
-    setTimeout(() => setConfirmation(null), 5000);
+      setShowForm(false);
+      setForm(emptyForm);
+      setTimeout(() => setConfirmation(null), 5000);
+    } catch (err) {
+      setSubmitError(err.response?.data?.message || "Erreur lors de l'enregistrement.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
     <div className="stock-out-page">
       <div className="stock-out-container">
+        {/* Header */}
         <div className="stock-out-header">
           <div>
             <h1 className="page-title">Mouvements de sortie</h1>
@@ -154,6 +180,7 @@ export default function MovementsOutPage() {
           </button>
         </div>
 
+        {/* Confirmation */}
         {confirmation && (
           <div className="stock-out-confirmation">
             <CheckCircle2 size={18} className="stock-out-confirmation-icon" />
@@ -167,7 +194,20 @@ export default function MovementsOutPage() {
           </div>
         )}
 
-        {mouvements.length === 0 ? (
+        {/* Liste des mouvements */}
+        {loading ? (
+          <div className="stock-out-empty">
+            <p>Chargement des sorties…</p>
+          </div>
+        ) : loadError ? (
+          <div className="stock-out-empty">
+            <AlertCircle size={28} />
+            <p>{loadError}</p>
+            <button type="button" className="stock-out-add-btn" onClick={loadAll}>
+              Réessayer
+            </button>
+          </div>
+        ) : mouvements.length === 0 ? (
           <div className="stock-out-empty">
             <Inbox size={28} />
             <p>Aucun mouvement de sortie enregistré pour l'instant.</p>
@@ -187,6 +227,7 @@ export default function MovementsOutPage() {
                   <th>Motif</th>
                   <th>Observation</th>
                   <th>Nouveau stock</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -197,7 +238,19 @@ export default function MovementsOutPage() {
                     <td>{m.date}</td>
                     <td>{m.motif}</td>
                     <td className="stock-out-obs-cell">{m.observation || "—"}</td>
-                    <td className="stock-out-new-stock-cell">{m.nouveauStock}</td>
+                    <td className="stock-out-new-stock-cell">
+                      {m.stockActuel}
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="stock-out-view-btn"
+                        onClick={() => openView(m)}
+                      >
+                        <Eye size={15} />
+                        Voir
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -205,6 +258,81 @@ export default function MovementsOutPage() {
           </div>
         )}
 
+        {/* Modale de détail */}
+        {viewedMouvement && (
+          <div className="stock-out-modal-overlay" onClick={closeView}>
+            <div className="stock-out-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="stock-out-modal-header">
+                <h2 className="stock-out-modal-title">
+                  <Eye size={18} />
+                  Détail de la sortie
+                </h2>
+                <button
+                  type="button"
+                  className="stock-out-modal-close"
+                  onClick={closeView}
+                  aria-label="Fermer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="stock-out-details">
+                <div className="stock-out-details-item">
+                  <span className="stock-out-details-label">Article</span>
+                  <span className="stock-out-details-value">
+                    {viewedMouvement.article}
+                    {viewedMouvement.articleReference && (
+                      <span className="stock-out-details-sub">
+                        réf. {viewedMouvement.articleReference}
+                      </span>
+                    )}
+                  </span>
+                </div>
+
+                <div className="stock-out-details-item">
+                  <span className="stock-out-details-label">Quantité sortie</span>
+                  <span className="stock-out-details-value stock-out-details-value--negative">
+                    −{viewedMouvement.quantite}
+                  </span>
+                </div>
+
+                <div className="stock-out-details-item">
+                  <span className="stock-out-details-label">Date</span>
+                  <span className="stock-out-details-value">{viewedMouvement.date}</span>
+                </div>
+
+                <div className="stock-out-details-item">
+                  <span className="stock-out-details-label">Motif</span>
+                  <span className="stock-out-details-value">{viewedMouvement.motif}</span>
+                </div>
+
+                <div className="stock-out-details-item">
+                  <span className="stock-out-details-label">Observation</span>
+                  <span className="stock-out-details-value">
+                    {viewedMouvement.observation || "—"}
+                  </span>
+                </div>
+
+                <div className="stock-out-details-item">
+                  <span className="stock-out-details-label">Nouveau stock</span>
+                  <span className="stock-out-details-value stock-out-details-value--stock">
+                    {viewedMouvement.stockActuel} {viewedMouvement.articleUnite}
+                  </span>
+                </div>
+
+                {viewedMouvement.user && (
+                  <div className="stock-out-details-item">
+                    <span className="stock-out-details-label">Enregistré par</span>
+                    <span className="stock-out-details-value">{viewedMouvement.user}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modale du formulaire */}
         {showForm && (
           <div className="stock-out-modal-overlay" onClick={closeForm}>
             <div className="stock-out-modal" onClick={(e) => e.stopPropagation()}>
@@ -225,6 +353,7 @@ export default function MovementsOutPage() {
 
               <form onSubmit={handleSubmit} className="stock-out-form" noValidate>
                 <div className="stock-out-grid">
+                  {/* Article */}
                   <div className="stock-out-field stock-out-field--full">
                     <label className="stock-out-label">
                       <Package size={15} />
@@ -254,6 +383,7 @@ export default function MovementsOutPage() {
                     )}
                   </div>
 
+                  {/* Quantité */}
                   <div className="stock-out-field">
                     <label className="stock-out-label">Quantité sortie</label>
                     <input
@@ -271,6 +401,7 @@ export default function MovementsOutPage() {
                     )}
                   </div>
 
+                  {/* Date */}
                   <div className="stock-out-field">
                     <label className="stock-out-label">
                       <Calendar size={15} />
@@ -289,6 +420,7 @@ export default function MovementsOutPage() {
                     )}
                   </div>
 
+                  {/* Motif */}
                   <div className="stock-out-field stock-out-field--full">
                     <label className="stock-out-label">Motif</label>
                     <select
@@ -310,6 +442,7 @@ export default function MovementsOutPage() {
                     )}
                   </div>
 
+                  {/* Observation */}
                   <div className="stock-out-field stock-out-field--full">
                     <label className="stock-out-label">
                       <ClipboardList size={15} />
@@ -325,17 +458,19 @@ export default function MovementsOutPage() {
                   </div>
                 </div>
 
+                {submitError && (
+                  <p className="stock-out-error">
+                    <AlertCircle size={12} /> {submitError}
+                  </p>
+                )}
+
                 <div className="stock-out-modal-actions">
-                  <button
-                    type="button"
-                    className="stock-out-cancel-btn"
-                    onClick={closeForm}
-                  >
+                  <button type="button" className="stock-out-cancel-btn" onClick={closeForm} disabled={saving}>
                     Annuler
                   </button>
-                  <button type="submit" className="stock-out-submit">
+                  <button type="submit" className="stock-out-submit" disabled={saving}>
                     <ArrowUpFromLine size={16} />
-                    Enregistrer la sortie
+                    {saving ? "Enregistrement…" : "Enregistrer la sortie"}
                   </button>
                 </div>
               </form>

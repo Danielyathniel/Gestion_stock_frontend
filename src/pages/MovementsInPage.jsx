@@ -71,7 +71,7 @@ async function loadAll() {
     setMouvements(mouvementsData);
     setTypeMouvements(typesData);
   } catch {
-    setLoadError("Impossible de charger les données. Vérifie que l'API tourne bien.");
+    setLoadError("Impossible de charger les données.");
   } finally {
     setLoading(false);
   }
@@ -234,7 +234,7 @@ async function handleSubmit(evt) {
                     <td>{m.motif}</td>
                     <td className="stock-in-obs-cell">{m.observation || "—"}</td>
                     <td className="stock-in-new-stock-cell">
-                      {m.stockActuel + m.quantite}
+                      { m.stockActuel}
                     </td>
                     <td>
                       <button
@@ -315,7 +315,7 @@ async function handleSubmit(evt) {
                 <div className="stock-in-details-item">
                   <span className="stock-in-details-label">Nouveau stock</span>
                   <span className="stock-in-details-value stock-in-details-value--stock">
-                    {viewedMouvement.stockActuel + viewedMouvement.quantite} unités
+                    {viewedMouvement.stockActuel }  {viewedMouvement.articleUnite}
                   </span>
                 </div>
 
