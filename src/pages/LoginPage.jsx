@@ -1,64 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import authService from "../services/authService";
-import brandImage from "../assets/login-brand-cutout.png";
 import "./LoginPage.css";
-
-const BACKGROUND_VIDEO =
-  "https://videos.pexels.com/video-files/14910119/14910119-hd_1920_1080_24fps.mp4";
-
-const BRAND_IMAGE = brandImage;
-
-const BRAND_HEADLINE = "Chaque casier compte. Sache toujours ce qu'il y a dedans.";
-
-function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(mq.matches);
-    const onChange = (e) => setReduced(e.matches);
-    if (mq.addEventListener) mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener?.("change", onChange);
-  }, []);
-
-  return reduced;
-}
-
-function useTypewriter(text, { typeSpeed = 40, deleteSpeed = 16, pause = 2800 } = {}) {
-  const [display, setDisplay] = useState("");
-  const [phase, setPhase] = useState("typing");
-  const reducedMotion = usePrefersReducedMotion();
-
-  useEffect(() => {
-    if (reducedMotion) {
-      setDisplay(text);
-      return;
-    }
-
-    let timer;
-    if (phase === "typing") {
-      if (display.length < text.length) {
-        timer = setTimeout(() => setDisplay(text.slice(0, display.length + 1)), typeSpeed);
-      } else {
-        timer = setTimeout(() => setPhase("pausing"), pause);
-      }
-    } else if (phase === "pausing") {
-      timer = setTimeout(() => setPhase("deleting"), 250);
-    } else if (phase === "deleting") {
-      if (display.length > 0) {
-        timer = setTimeout(() => setDisplay(text.slice(0, display.length - 1)), deleteSpeed);
-      } else {
-        timer = setTimeout(() => setPhase("typing"), 500);
-      }
-    }
-
-    return () => clearTimeout(timer);
-  }, [display, phase, text, typeSpeed, deleteSpeed, pause, reducedMotion]);
-
-  return display;
-}
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -69,8 +13,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const headline = useTypewriter(BRAND_HEADLINE);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -87,52 +29,25 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
- 
-   try {
-  const result = await authService.login(email, password);
+    try {
+      const result = await authService.login(email, password);
 
-    if (result.success) {
-      login(result.user);
-      navigate("/");
-    } else {
-      setError(result.message || "Email ou mot de passe incorrect");
+      if (result.success) {
+        login(result.user);
+        navigate("/");
+      } else {
+        setError(result.message || "Email ou mot de passe incorrect");
+      }
+    } catch (err) {
+      setError("Erreur de connexion. Vérifie que le serveur est démarré.");
+      console.error("Erreur:", err);
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    setError("Erreur de connexion. Vérifie que le serveur est démarré.");
-    console.error("Erreur:", err);
-  } finally {
-    setLoading(false);
-  }
   }
 
   return (
     <div className="login-screen">
-      <div className="login-backdrop" aria-hidden="true">
-        <video autoPlay muted loop playsInline>
-          <source src={BACKGROUND_VIDEO} type="video/mp4" />
-        </video>
-        <div className="login-backdrop-overlay" />
-      </div>
-
-      <aside className="login-brand">
-        <div className="login-brand-top">
-          <span className="login-brand-mark">STOCKFLOW</span>
-          <span className="login-brand-tag">SYSTÈME · GESTION DE STOCK</span>
-        </div>
-
-        <img className="login-brand-art" src={BRAND_IMAGE} alt="" />
-
-        <div className="login-brand-bottom">
-          <p className="login-brand-headline">
-            {headline}
-            <span className="login-caret" aria-hidden="true" />
-          </p>
-          <p className="login-brand-sub">
-            Suivi des articles, mouvements et alertes de stock en un seul endroit.
-          </p>
-        </div>
-      </aside>
-
       <main className="login-panel">
         <form className="login-card" onSubmit={handleSubmit} noValidate>
           <div className="login-card-head">
@@ -161,26 +76,24 @@ export default function LoginPage() {
                 placeholder="••••••••"
                 autoComplete="current-password"
               />
-<button
-  type="button"
-  className="login-password-toggle"
-  onClick={() => setShowPassword((v) => !v)}
-  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
->
-  {showPassword ? (
-    // œil barré (mot de passe visible → cliquer pour masquer)
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-      <line x1="1" y1="1" x2="23" y2="23" />
-    </svg>
-  ) : (
-    // œil ouvert (mot de passe masqué → cliquer pour afficher)
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  )}
-</button>
+              <button
+                type="button"
+                className="login-password-toggle"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+              >
+                {showPassword ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                )}
+              </button>
             </div>
           </label>
 

@@ -4,151 +4,59 @@
   position: relative;
   min-height: 100vh;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  place-items: center;
   font-family: "Inter", system-ui, sans-serif;
+  background: linear-gradient(150deg, #3a574b 0%, #507064 50%, #6d867c 100%);
+  padding: 24px;
+  overflow: hidden;
 }
 
-/* ---------- Fond vidéo plein écran ---------- */
-
-.login-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-}
-
-.login-backdrop video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  animation: fadeIn 1.2s ease both;
-}
-
-.login-backdrop-overlay {
+.login-screen::before,
+.login-screen::after {
+  content: "";
   position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    115deg,
-    rgba(20, 24, 27, 0.85) 0%,
-    rgba(46, 99, 80, 0.6) 50%,
-    rgba(20, 24, 27, 0.45) 100%
-  );
+  border-radius: 50%;
+  filter: blur(70px);
+  z-index: 0;
+  pointer-events: none;
 }
 
-/* ---------- Panneau de marque (gauche) ---------- */
-
-.login-brand {
-  position: relative;
-  z-index: 1;
-  color: #f5f6f4;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 48px 56px;
-  animation: fadeInUp 0.6s ease both;
+.login-screen::before {
+  width: 520px;
+  height: 520px;
+  background: rgba(125, 184, 154, 0.22);
+  top: -140px;
+  left: -120px;
 }
 
-.login-brand-top {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  animation: fadeInUp 0.6s 0.1s ease both;
+.login-screen::after {
+  width: 440px;
+  height: 440px;
+  background: rgba(20, 24, 27, 0.16);
+  bottom: -130px;
+  right: -100px;
 }
-
-.login-brand-mark {
-  font-family: "Space Grotesk", sans-serif;
-  font-weight: 700;
-  font-size: 28px;
-  letter-spacing: 0.02em;
-}
-
-.login-brand-tag {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 13px;
-  letter-spacing: 0.14em;
-  color: #8b978f;
-}
-
-/* ---------- Image (vraie photo en cercle) ---------- */
-
-.login-brand-art {
-  width: 560px;
-  border: none;
-  margin: 44px auto;
-  animation: float-card 5s ease-in-out infinite;
-}
-
-@keyframes float-card {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-12px);
-  }
-}
-
-.login-brand-bottom {
-  max-width: 380px;
-  animation: fadeInUp 0.6s 0.2s ease both;
-}
-
-.login-brand-headline {
-  font-family: "Space Grotesk", sans-serif;
-  font-weight: 600;
-  font-size: 32px;
-  line-height: 1.3;
-  margin: 0 0 12px;
-  min-height: 84px;
-}
-
-.login-caret {
-  display: inline-block;
-  width: 3px;
-  height: 1em;
-  margin-left: 3px;
-  vertical-align: -0.1em;
-  border-radius: 2px;
-  background: #7db89a;
-  animation: caret-blink 0.8s step-end infinite;
-}
-
-@keyframes caret-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
-.login-brand-sub {
-  font-size: 16px;
-  line-height: 1.6;
-  color: #a7b0ac;
-  margin: 0;
-}
-
-/* ---------- Panneau du formulaire (droite) ---------- */
 
 .login-panel {
   position: relative;
   z-index: 1;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px;
 }
 
 .login-card {
   width: 100%;
-  max-width: 480px;
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  max-width: 440px;
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 18px;
-  padding: 64px 48px;
+  padding: 48px 44px;
   display: flex;
   flex-direction: column;
-  gap: 28px;
-  box-shadow: 0 18px 40px rgba(20, 24, 27, 0.22);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  animation: fadeInUp 0.5s 0.25s ease both;
+  gap: 24px;
+  box-shadow: 0 24px 60px rgba(12, 32, 25, 0.35);
 }
 
 .login-card-head h1 {
@@ -267,45 +175,12 @@
   cursor: default;
 }
 
-/* ---------- Responsive ---------- */
-
-@media (max-width: 860px) {
+@media (max-width: 480px) {
   .login-screen {
-    grid-template-columns: 1fr;
-    overflow-y: auto;
-  }
-
-  .login-backdrop-overlay {
-    background: linear-gradient(
-      180deg,
-      rgba(20, 24, 27, 0.88) 0%,
-      rgba(46, 99, 80, 0.72) 100%
-    );
-  }
-
-  .login-brand {
-    padding: 32px 28px;
-  }
-
-  .login-brand-art {
-    width: 340px;
-    margin: 28px auto;
-  }
-
-  .login-brand-headline {
-    font-size: 26px;
-    min-height: 68px;
+    padding: 16px;
   }
 
   .login-card {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .login-brand-art {
-    animation: none;
+    padding: 32px 24px;
   }
 }
