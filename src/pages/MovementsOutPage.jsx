@@ -134,12 +134,12 @@ export default function MovementsOutPage() {
         observation: form.observation,
       });
 
-      // 🔴 1. CALCUL : STOCK - QUANTITÉ (SORTIE)
+      //  1. CALCUL : STOCK - QUANTITÉ (SORTIE)
       const nouveauStock = article.stock - qte;
 
       setMouvements((m) => [created, ...m]);
 
-      // 🔴 2. METTRE À JOUR LE STOCK DANS LA LISTE
+      //  2. METTRE À JOUR LE STOCK DANS LA LISTE
       setArticles((prev) =>
         prev.map((a) =>
           a.id === article.id ? { ...a, stock: nouveauStock } : a
