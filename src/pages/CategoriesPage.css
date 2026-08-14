@@ -297,9 +297,9 @@
   animation: modalIn 0.22s cubic-bezier(0.2, 0.8, 0.3, 1) both;
 }
 .modal-success {
-  color: #16a34a;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  color: #2e6350;
+  background: #e4eee9;
+  border: 1px solid #cfe7dd;
   padding: 10px 14px;
   border-radius: 8px;
   margin-bottom: 16px;

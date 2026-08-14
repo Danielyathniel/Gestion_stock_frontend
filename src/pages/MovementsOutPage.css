@@ -1,11 +1,20 @@
 .stock-out-page {
-  min-height: 100vh;
-  background: #f8fafc;
-  color: #0f172a;
-  padding: 2rem 1rem;
+  position: relative;
+  min-height: 100%;
+  padding: 24px;
+  color: #14181b;
+  background-image:
+    linear-gradient(rgba(228, 238, 233, 0.88), rgba(228, 238, 233, 0.88)),
+    url("https://images.unsplash.com/photo-1554774853-aae0a22c8aa4?auto=format&fit=crop&w=1600&q=80");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 .stock-out-container {
+  position: relative;
+  z-index: 1;
   max-width: 56rem;
   margin: 0 auto;
 }
@@ -29,7 +38,7 @@
 .page-subtitle {
   margin: 0.25rem 0 0;
   font-size: 0.875rem;
-  color: #64748b;
+  color: #5e6a66;
 }
 
 .stock-out-add-btn {
@@ -38,7 +47,7 @@
   gap: 0.375rem;
   border: none;
   border-radius: 0.5rem;
-  background: #dc2626;
+  background: #b23a34;
   color: #ffffff;
   padding: 0.5rem 0.875rem;
   font-size: 0.875rem;
@@ -49,7 +58,7 @@
 }
 
 .stock-out-add-btn:hover {
-  background: #b91c1c;
+  background: #8f2c27;
 }
 
 /* Confirmation */
@@ -58,17 +67,17 @@
   align-items: flex-start;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
-  border: 1px solid #fecaca;
-  background: #fef2f2;
+  border: 1px solid #efc4c2;
+  background: #fbeeed;
   border-radius: 0.75rem;
   padding: 0.875rem 1rem;
   font-size: 0.875rem;
-  color: #991b1b;
+  color: #7a2420;
 }
 
 .stock-out-confirmation-icon {
   margin-top: 0.125rem;
-  color: #dc2626;
+  color: #b23a34;
   flex-shrink: 0;
 }
 
@@ -91,16 +100,16 @@
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed #d4dcd7;
   border-radius: 1rem;
   background: #ffffff;
   padding: 3rem 1.5rem;
-  color: #64748b;
+  color: #5e6a66;
   text-align: center;
 }
 
 .stock-out-empty svg {
-  color: #94a3b8;
+  color: #9aa39f;
 }
 
 .stock-out-empty p {
@@ -111,7 +120,7 @@
 /* Table */
 .stock-out-table-wrap {
   overflow-x: auto;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dde2df;
   border-radius: 0.75rem;
   background: #ffffff;
 }
@@ -124,7 +133,7 @@
 }
 
 .stock-out-table thead {
-  background: #f8fafc;
+  background: #f5f6f4;
 }
 
 .stock-out-table th {
@@ -132,26 +141,26 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: #64748b;
+  color: #5e6a66;
   font-weight: 500;
   white-space: nowrap;
 }
 
 .stock-out-table td {
   padding: 0.625rem 1rem;
-  border-top: 1px solid #f1f5f9;
-  color: #1e293b;
+  border-top: 1px solid #eef1ef;
+  color: #1c2622;
   white-space: nowrap;
 }
 
 .stock-out-obs-cell {
   white-space: normal;
-  color: #64748b;
+  color: #5e6a66;
   max-width: 16rem;
 }
 
 .stock-out-qty-cell {
-  color: #dc2626;
+  color: #b23a34;
   font-weight: 500;
 }
 
@@ -163,7 +172,7 @@
 .stock-out-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(20, 24, 27, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -186,7 +195,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #eef1ef;
   position: sticky;
   top: 0;
   background: #ffffff;
@@ -205,7 +214,7 @@
 .stock-out-modal-close {
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #5e6a66;
   cursor: pointer;
   display: flex;
   padding: 0.25rem;
@@ -214,7 +223,7 @@
 }
 
 .stock-out-modal-close:hover {
-  background: #f1f5f9;
+  background: #eef1ef;
 }
 
 /* Form (à l'intérieur de la modale) */
@@ -249,25 +258,25 @@
   margin-bottom: 0.375rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #334155;
+  color: #3d4a45;
 }
 
 .stock-out-label svg {
-  color: #94a3b8;
+  color: #9aa39f;
 }
 
 .stock-out-optional {
   font-weight: 400;
-  color: #94a3b8;
+  color: #9aa39f;
 }
 
 .stock-out-input {
   width: 100%;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #d4dcd7;
   border-radius: 0.5rem;
   padding: 0.625rem 0.75rem;
   font-size: 0.875rem;
-  color: #0f172a;
+  color: #14181b;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
   background: #ffffff;
@@ -276,13 +285,13 @@
 }
 
 .stock-out-input:focus {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+  border-color: #b23a34;
+  box-shadow: 0 0 0 3px rgba(178, 58, 52, 0.18);
 }
 
 .stock-out-input--error {
-  border-color: #fca5a5;
-  background: #fef2f2;
+  border-color: #efc4c2;
+  background: #fbeeed;
 }
 
 .stock-out-textarea {
@@ -295,17 +304,17 @@
   gap: 0.25rem;
   margin: 0.375rem 0 0;
   font-size: 0.75rem;
-  color: #dc2626;
+  color: #b23a34;
 }
 
 .stock-out-hint {
   margin: 0.375rem 0 0;
   font-size: 0.75rem;
-  color: #64748b;
+  color: #5e6a66;
 }
 
 .stock-out-hint strong {
-  color: #334155;
+  color: #3d4a45;
 }
 
 .stock-out-modal-actions {
@@ -316,10 +325,10 @@
 }
 
 .stock-out-cancel-btn {
-  border: 1px solid #cbd5e1;
+  border: 1px solid #d4dcd7;
   border-radius: 0.5rem;
   background: #ffffff;
-  color: #334155;
+  color: #3d4a45;
   padding: 0.625rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
@@ -328,7 +337,7 @@
 }
 
 .stock-out-cancel-btn:hover {
-  background: #f8fafc;
+  background: #f5f6f4;
 }
 
 .stock-out-submit {
@@ -338,7 +347,7 @@
   gap: 0.5rem;
   border: none;
   border-radius: 0.5rem;
-  background: #dc2626;
+  background: #b23a34;
   color: #ffffff;
   padding: 0.625rem 1rem;
   font-size: 0.875rem;
@@ -348,9 +357,9 @@
 }
 
 .stock-out-submit:hover {
-  background: #b91c1c;
+  background: #8f2c27;
 }
 
 .stock-out-submit:active {
-  background: #991b1b;
+  background: #7a2420;
 }

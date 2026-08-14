@@ -1,11 +1,20 @@
 .stock-in-page {
-  min-height: 100vh;
-  background: #f8fafc;
-  color: #0f172a;
-  padding: 2rem 1rem;
+  position: relative;
+  min-height: 100%;
+  padding: 24px;
+  color: #14181b;
+  background-image:
+    linear-gradient(rgba(228, 238, 233, 0.88), rgba(228, 238, 233, 0.88)),
+    url("https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1600&q=80");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 .stock-in-container {
+  position: relative;
+  z-index: 1;
   max-width: 56rem;
   margin: 0 auto;
 }
@@ -29,7 +38,7 @@
 .page-subtitle {
   margin: 0.25rem 0 0;
   font-size: 0.875rem;
-  color: #64748b;
+  color: #5e6a66;
 }
 
 .stock-in-add-btn {
@@ -38,7 +47,7 @@
   gap: 0.375rem;
   border: none;
   border-radius: 0.5rem;
-  background: #059669;
+  background: #2e6350;
   color: #ffffff;
   padding: 0.5rem 0.875rem;
   font-size: 0.875rem;
@@ -49,7 +58,7 @@
 }
 
 .stock-in-add-btn:hover {
-  background: #047857;
+  background: #275546;
 }
 
 /* Confirmation */
@@ -58,17 +67,17 @@
   align-items: flex-start;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
-  border: 1px solid #a7f3d0;
-  background: #ecfdf5;
+  border: 1px solid #cfe7dd;
+  background: #e4eee9;
   border-radius: 0.75rem;
   padding: 0.875rem 1rem;
   font-size: 0.875rem;
-  color: #065f46;
+  color: #1f4438;
 }
 
 .stock-in-confirmation-icon {
   margin-top: 0.125rem;
-  color: #059669;
+  color: #2e6350;
   flex-shrink: 0;
 }
 
@@ -91,16 +100,16 @@
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed #d4dcd7;
   border-radius: 1rem;
   background: #ffffff;
   padding: 3rem 1.5rem;
-  color: #64748b;
+  color: #5e6a66;
   text-align: center;
 }
 
 .stock-in-empty svg {
-  color: #94a3b8;
+  color: #9aa39f;
 }
 
 .stock-in-empty p {
@@ -111,7 +120,7 @@
 /* Table */
 .stock-in-table-wrap {
   overflow-x: auto;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dde2df;
   border-radius: 0.75rem;
   background: #ffffff;
 }
@@ -124,7 +133,7 @@
 }
 
 .stock-in-table thead {
-  background: #f8fafc;
+  background: #f5f6f4;
 }
 
 .stock-in-table th {
@@ -132,26 +141,26 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: #64748b;
+  color: #5e6a66;
   font-weight: 500;
   white-space: nowrap;
 }
 
 .stock-in-table td {
   padding: 0.625rem 1rem;
-  border-top: 1px solid #f1f5f9;
-  color: #1e293b;
+  border-top: 1px solid #eef1ef;
+  color: #1c2622;
   white-space: nowrap;
 }
 
 .stock-in-obs-cell {
   white-space: normal;
-  color: #64748b;
+  color: #5e6a66;
   max-width: 16rem;
 }
 
 .stock-in-qty-cell {
-  color: #047857;
+  color: #275546;
   font-weight: 500;
 }
 
@@ -163,10 +172,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #d4dcd7;
   border-radius: 0.5rem;
   background: #ffffff;
-  color: #334155;
+  color: #3d4a45;
   padding: 0.375rem 0.625rem;
   font-size: 0.75rem;
   font-weight: 500;
@@ -175,16 +184,16 @@
 }
 
 .stock-in-view-btn:hover {
-  background: #f0fdf4;
-  border-color: #10b981;
-  color: #047857;
+  background: #e4eee9;
+  border-color: #3f7f69;
+  color: #275546;
 }
 
 /* Modale */
 .stock-in-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(20, 24, 27, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -207,7 +216,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #eef1ef;
   position: sticky;
   top: 0;
   background: #ffffff;
@@ -226,7 +235,7 @@
 .stock-in-modal-close {
   border: none;
   background: transparent;
-  color: #64748b;
+  color: #5e6a66;
   cursor: pointer;
   display: flex;
   padding: 0.25rem;
@@ -235,7 +244,7 @@
 }
 
 .stock-in-modal-close:hover {
-  background: #f1f5f9;
+  background: #eef1ef;
 }
 
 /* Form (à l'intérieur de la modale) */
@@ -270,25 +279,25 @@
   margin-bottom: 0.375rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #334155;
+  color: #3d4a45;
 }
 
 .stock-in-label svg {
-  color: #94a3b8;
+  color: #9aa39f;
 }
 
 .stock-in-optional {
   font-weight: 400;
-  color: #94a3b8;
+  color: #9aa39f;
 }
 
 .stock-in-input {
   width: 100%;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #d4dcd7;
   border-radius: 0.5rem;
   padding: 0.625rem 0.75rem;
   font-size: 0.875rem;
-  color: #0f172a;
+  color: #14181b;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
   background: #ffffff;
@@ -297,13 +306,13 @@
 }
 
 .stock-in-input:focus {
-  border-color: #10b981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  border-color: #3f7f69;
+  box-shadow: 0 0 0 3px rgba(46, 99, 80, 0.18);
 }
 
 .stock-in-input--error {
-  border-color: #fca5a5;
-  background: #fef2f2;
+  border-color: #efc4c2;
+  background: #fbeeed;
 }
 
 .stock-in-textarea {
@@ -316,17 +325,17 @@
   gap: 0.25rem;
   margin: 0.375rem 0 0;
   font-size: 0.75rem;
-  color: #dc2626;
+  color: #b23a34;
 }
 
 .stock-in-hint {
   margin: 0.375rem 0 0;
   font-size: 0.75rem;
-  color: #64748b;
+  color: #5e6a66;
 }
 
 .stock-in-hint strong {
-  color: #334155;
+  color: #3d4a45;
 }
 
 .stock-in-modal-actions {
@@ -337,10 +346,10 @@
 }
 
 .stock-in-cancel-btn {
-  border: 1px solid #cbd5e1;
+  border: 1px solid #d4dcd7;
   border-radius: 0.5rem;
   background: #ffffff;
-  color: #334155;
+  color: #3d4a45;
   padding: 0.625rem 1rem;
   font-size: 0.875rem;
   font-weight: 500;
@@ -349,7 +358,7 @@
 }
 
 .stock-in-cancel-btn:hover {
-  background: #f8fafc;
+  background: #f5f6f4;
 }
 
 .stock-in-submit {
@@ -359,7 +368,7 @@
   gap: 0.5rem;
   border: none;
   border-radius: 0.5rem;
-  background: #059669;
+  background: #2e6350;
   color: #ffffff;
   padding: 0.625rem 1rem;
   font-size: 0.875rem;
@@ -369,11 +378,11 @@
 }
 
 .stock-in-submit:hover {
-  background: #047857;
+  background: #275546;
 }
 
 .stock-in-submit:active {
-  background: #065f46;
+  background: #1f4438;
 }
 
 .stock-in-submit:disabled,
@@ -401,12 +410,12 @@
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: #94a3b8;
+  color: #9aa39f;
 }
 
 .stock-in-details-value {
   font-size: 0.95rem;
-  color: #1e293b;
+  color: #1c2622;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -414,10 +423,10 @@
 
 .stock-in-details-value--stock {
   font-weight: 600;
-  color: #047857;
+  color: #275546;
 }
 
 .stock-in-details-sub {
   font-size: 0.8rem;
-  color: #64748b;
+  color: #5e6a66;
 }

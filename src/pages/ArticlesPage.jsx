@@ -54,6 +54,7 @@ export default function ArticlesPage() {
   const [form, setForm] = useState(emptyForm([]));
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const [viewTarget, setViewTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -109,6 +110,11 @@ export default function ArticlesPage() {
     setModal({ mode: "add" });
   }
 
+  function showSuccess(message) {
+    setSuccessMessage(message);
+    window.setTimeout(() => setSuccessMessage(""), 3000);
+  }
+
   function openEditModal(article) {
     setForm({
       reference: article.reference,
@@ -160,11 +166,13 @@ export default function ArticlesPage() {
       if (modal.mode === "add") {
         const created = await createArticle(form);
         setArticles((prev) => [...prev, created]);
+        showSuccess("Article ajouté avec succès.");
       } else {
         const updated = await updateArticle(modal.article.id, form);
         setArticles((prev) =>
           prev.map((art) => (art.id === updated.id ? updated : art))
         );
+        showSuccess("Modification enregistrée.");
       }
       closeModal();
     } catch (err) {
@@ -198,6 +206,7 @@ export default function ArticlesPage() {
       window.setTimeout(() => {
         setArticles((prev) => prev.filter((art) => art.id !== target.id));
         setRemovingId(null);
+        showSuccess("Article supprimé avec succès.");
       }, EXIT_DURATION);
     } catch (err) {
       // si la suppression échoue côté API (ex: article lié à des mouvements),
@@ -208,8 +217,10 @@ export default function ArticlesPage() {
   if (loading) {
     return (
       <div className="articles-page">
-        <h1 className="page-title">Articles</h1>
-        <p className="page-subtitle">Chargement…</p>
+        <div className="articles-content">
+          <h1 className="page-title">Articles</h1>
+          <p className="page-subtitle">Chargement…</p>
+        </div>
       </div>
     );
   }
@@ -217,19 +228,24 @@ export default function ArticlesPage() {
   if (loadError) {
     return (
       <div className="articles-page">
-        <h1 className="page-title">Articles</h1>
-        <p className="page-subtitle">{loadError}</p>
-        <button type="button" className="btn btn-primary" onClick={loadAll}>
-          Réessayer
-        </button>
+        <div className="articles-content">
+          <h1 className="page-title">Articles</h1>
+          <p className="page-subtitle">{loadError}</p>
+          <button type="button" className="btn btn-primary" onClick={loadAll}>
+            Réessayer
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="articles-page">
-      <h1 className="page-title">Articles</h1>
-      <p className="page-subtitle">Fiches produits et niveaux de stock.</p>
+      <div className="articles-content">
+        <h1 className="page-title">Articles</h1>
+        <p className="page-subtitle">Fiches produits et niveaux de stock.</p>
+
+      {successMessage && <p className="modal-success">{successMessage}</p>}
 
       {alertCount > 0 && (
         <div className="stock-alert-banner">
@@ -352,6 +368,7 @@ export default function ArticlesPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {modal && (

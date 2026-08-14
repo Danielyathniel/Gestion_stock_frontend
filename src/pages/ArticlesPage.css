@@ -1,5 +1,21 @@
 .articles-page {
+  position: relative;
+  min-height: 100%;
+  padding: 24px;
+  background-image:
+    linear-gradient(rgba(228, 238, 233, 0.88), rgba(228, 238, 233, 0.88)),
+    url("https://images.unsplash.com/photo-1587293852726-70cdb56c2866?auto=format&fit=crop&w=1600&q=80");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.articles-content {
+  position: relative;
+  z-index: 1;
   max-width: 1080px;
+  margin: 0 auto;
 }
 
 .stock-alert-banner {
@@ -397,6 +413,16 @@
   font-size: 13px;
   margin: 4px 0 0;
   animation: shakeError 0.3s ease;
+}
+
+.modal-success {
+  color: #2e6350;
+  background: #e4eee9;
+  border: 1px solid #cfe7dd;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
 }
 
 @keyframes shakeError {

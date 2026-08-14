@@ -1,0 +1,18 @@
+.dashboard-page {
+  position: relative;
+  min-height: 100%;
+  padding: 24px;
+  background-image:
+    linear-gradient(rgba(228, 238, 233, 0.88), rgba(228, 238, 233, 0.88)),
+    url("https://images.unsplash.com/photo-1563453392212-326f5e854473?auto=format&fit=crop&w=1600&q=80");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.dashboard-content {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+}

@@ -1,85 +1,128 @@
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap");
 
 .login-screen {
+  position: relative;
   min-height: 100vh;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   font-family: "Inter", system-ui, sans-serif;
 }
 
+/* ---------- Fond vidéo plein écran ---------- */
+
+.login-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.login-backdrop video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  animation: fadeIn 1.2s ease both;
+}
+
+.login-backdrop-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    rgba(20, 24, 27, 0.85) 0%,
+    rgba(46, 99, 80, 0.6) 50%,
+    rgba(20, 24, 27, 0.45) 100%
+  );
+}
+
 /* ---------- Panneau de marque (gauche) ---------- */
 
 .login-brand {
-  background: #14181b;
+  position: relative;
+  z-index: 1;
   color: #f5f6f4;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 48px 56px;
-  position: relative;
-  overflow: hidden;
+  animation: fadeInUp 0.6s ease both;
 }
 
 .login-brand-top {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  animation: fadeInUp 0.6s 0.1s ease both;
 }
 
 .login-brand-mark {
   font-family: "Space Grotesk", sans-serif;
   font-weight: 700;
-  font-size: 22px;
+  font-size: 28px;
   letter-spacing: 0.02em;
 }
 
 .login-brand-tag {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 0.14em;
   color: #8b978f;
 }
 
-.login-grid {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 10px;
-  max-width: 340px;
-  margin: 40px 0;
-}
+/* ---------- Image (vraie photo en cercle) ---------- */
 
-.login-grid-cell {
+.login-brand-art {
+  width: 260px;
   aspect-ratio: 1;
-  border-radius: 3px;
-  background: rgba(245, 246, 244, 0.06);
-  border: 1px solid rgba(245, 246, 244, 0.09);
+  object-fit: cover;
+  border-radius: 50%;
+  border: 4px solid rgba(245, 246, 244, 0.3);
+  box-shadow: 0 26px 46px rgba(20, 24, 27, 0.45);
+  margin: 44px auto;
+  animation: float-card 5s ease-in-out infinite;
 }
 
-.login-grid-cell.is-active {
-  background: #2e6350;
-  border-color: #3c8064;
-  animation: pulse-cell 3.2s ease-in-out infinite;
-}
-
-@keyframes pulse-cell {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 1; }
+@keyframes float-card {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
 }
 
 .login-brand-bottom {
   max-width: 380px;
+  animation: fadeInUp 0.6s 0.2s ease both;
 }
 
 .login-brand-headline {
   font-family: "Space Grotesk", sans-serif;
   font-weight: 600;
-  font-size: 26px;
+  font-size: 32px;
   line-height: 1.3;
   margin: 0 0 12px;
+  min-height: 84px;
+}
+
+.login-caret {
+  display: inline-block;
+  width: 3px;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: -0.1em;
+  border-radius: 2px;
+  background: #7db89a;
+  animation: caret-blink 0.8s step-end infinite;
+}
+
+@keyframes caret-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 .login-brand-sub {
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.6;
   color: #a7b0ac;
   margin: 0;
@@ -88,7 +131,8 @@
 /* ---------- Panneau du formulaire (droite) ---------- */
 
 .login-panel {
-  background: #f5f6f4;
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -98,14 +142,17 @@
 .login-card {
   width: 100%;
   max-width: 380px;
-  background: #ffffff;
-  border: 1px solid #dde2df;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 16px;
   padding: 36px 32px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  box-shadow: 0 1px 2px rgba(20, 24, 27, 0.04);
+  box-shadow: 0 18px 40px rgba(20, 24, 27, 0.22);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: fadeInUp 0.5s 0.25s ease both;
 }
 
 .login-card-head h1 {
@@ -226,24 +273,40 @@
 @media (max-width: 860px) {
   .login-screen {
     grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  .login-backdrop-overlay {
+    background: linear-gradient(
+      180deg,
+      rgba(20, 24, 27, 0.88) 0%,
+      rgba(46, 99, 80, 0.72) 100%
+    );
   }
 
   .login-brand {
     padding: 32px 28px;
   }
 
-  .login-grid {
-    max-width: 100%;
-    margin: 24px 0;
+  .login-brand-art {
+    width: 190px;
+    margin: 28px auto;
   }
 
   .login-brand-headline {
-    font-size: 21px;
+    font-size: 26px;
+    min-height: 68px;
+  }
+
+  .login-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .login-grid-cell.is-active {
+  .login-brand-art {
     animation: none;
   }
 }

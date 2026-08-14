@@ -10,10 +10,10 @@
   --border: #dde2df;
   --danger: #b23a34;
 
-  --sidebar-bg: #0b6b20;        /* vert clair très doux */
-  --sidebar-ink: #55eb1a;       /* vert foncé pour le texte actif */
-  --sidebar-ink-muted: #d0e4d8; /* vert-gris pour les liens inactifs */
-  --sidebar-accent: #4C8064;    /* vert moyen pour l'élément actif */
+  --sidebar-bg: #2e6350;        /* vert forêt doux */
+  --sidebar-ink: #e9f2ed;       /* texte clair sur le fond vert */
+  --sidebar-ink-muted: #bfd5ca; /* vert-gris pour les liens inactifs */
+  --sidebar-accent: #3f7f69;    /* vert plus clair pour l'élément actif */
 }
 
 * {
@@ -63,6 +63,42 @@ body {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(20, 24, 27, 0.08);
+}
+
+/* ---------- Animations globales ---------- */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .stat-label {

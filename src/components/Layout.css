@@ -14,4 +14,5 @@
 .app-content {
   flex: 1;
   padding: 32px;
+  animation: fadeInUp 0.35s ease both;
 }
