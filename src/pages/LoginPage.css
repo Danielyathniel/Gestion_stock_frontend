@@ -72,12 +72,8 @@
 /* ---------- Image (vraie photo en cercle) ---------- */
 
 .login-brand-art {
-  width: 260px;
-  aspect-ratio: 1;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 4px solid rgba(245, 246, 244, 0.3);
-  box-shadow: 0 26px 46px rgba(20, 24, 27, 0.45);
+  width: 560px;
+  border: none;
   margin: 44px auto;
   animation: float-card 5s ease-in-out infinite;
 }
@@ -141,14 +137,14 @@
 
 .login-card {
   width: 100%;
-  max-width: 380px;
+  max-width: 480px;
   background: rgba(255, 255, 255, 0.82);
   border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 16px;
-  padding: 36px 32px;
+  border-radius: 18px;
+  padding: 64px 48px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 28px;
   box-shadow: 0 18px 40px rgba(20, 24, 27, 0.22);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -157,14 +153,14 @@
 
 .login-card-head h1 {
   font-family: "Space Grotesk", sans-serif;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 600;
   color: #14181b;
-  margin: 0 0 6px;
+  margin: 0 0 10px;
 }
 
 .login-card-head p {
-  font-size: 14px;
+  font-size: 15px;
   color: #5e6a66;
   margin: 0;
 }
@@ -172,11 +168,11 @@
 .login-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .login-field-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: #14181b;
   letter-spacing: 0.01em;
@@ -184,8 +180,8 @@
 
 .login-field input {
   font-family: "Inter", sans-serif;
-  font-size: 14px;
-  padding: 11px 12px;
+  font-size: 15px;
+  padding: 16px 14px;
   border-radius: 8px;
   border: 1px solid #dde2df;
   background: #fbfbfa;
@@ -252,12 +248,12 @@
 .login-submit {
   font-family: "Inter", sans-serif;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
   color: #ffffff;
   background: #2e6350;
   border: none;
   border-radius: 8px;
-  padding: 12px 16px;
+  padding: 18px 16px;
   cursor: pointer;
   transition: background 0.15s ease, opacity 0.15s ease;
 }
@@ -292,7 +288,7 @@
   }
 
   .login-brand-art {
-    width: 190px;
+    width: 340px;
     margin: 28px auto;
   }
 

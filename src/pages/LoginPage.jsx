@@ -8,9 +8,6 @@ import "./LoginPage.css";
 const BACKGROUND_VIDEO =
   "https://videos.pexels.com/video-files/14910119/14910119-hd_1920_1080_24fps.mp4";
 
-const BACKGROUND_IMAGE =
-  "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1600&q=60";
-
 const BRAND_IMAGE = brandImage;
 
 const BRAND_HEADLINE = "Chaque casier compte. Sache toujours ce qu'il y a dedans.";
@@ -111,7 +108,7 @@ export default function LoginPage() {
   return (
     <div className="login-screen">
       <div className="login-backdrop" aria-hidden="true">
-        <video autoPlay muted loop playsInline poster={BACKGROUND_IMAGE}>
+        <video autoPlay muted loop playsInline>
           <source src={BACKGROUND_VIDEO} type="video/mp4" />
         </video>
         <div className="login-backdrop-overlay" />
