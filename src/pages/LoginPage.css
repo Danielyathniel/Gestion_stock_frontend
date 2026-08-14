@@ -212,24 +212,27 @@
 
 .login-password-wrap input {
   width: 100%;
-  padding-right: 78px;
+  padding-right: 44px;
 }
 
 .login-password-toggle {
   position: absolute;
   right: 8px;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
-  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   color: #2e6350;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px 6px;
+  padding: 0;
 }
 
 .login-password-toggle:hover {
-  text-decoration: underline;
+  color: #275546;
+  text-decoration: none;
 }
 
 .login-message {
