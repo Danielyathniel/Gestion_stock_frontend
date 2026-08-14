@@ -1,18 +1,78 @@
 .dashboard-page {
-  position: relative;
-  min-height: 100%;
   padding: 24px;
-  background-image:
-    linear-gradient(rgba(228, 238, 233, 0.88), rgba(228, 238, 233, 0.88)),
-    url("https://images.unsplash.com/photo-1563453392212-326f5e854473?auto=format&fit=crop&w=1600&q=80");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  background: #f3f6f4;
+  min-height: 100%;
 }
 
 .dashboard-content {
-  position: relative;
-  z-index: 1;
   max-width: 1080px;
+  margin: 0 auto;
+}
+
+.page-subtitle {
+  color: #5e6a66;
+  margin: 0 0 24px;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  background: #ffffff;
+  border: 1px solid #e5ebe7;
+  border-radius: 14px;
+  padding: 18px 16px;
+  box-shadow: 0 8px 20px rgba(20, 24, 27, 0.05);
+}
+
+.stat-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.stat-card-icon {
+  color: #2e6350;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #5e6a66;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: #14181b;
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.chart-card {
+  background: #ffffff;
+  border: 1px solid #e5ebe7;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 8px 20px rgba(20, 24, 27, 0.05);
+}
+
+.chart-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #14181b;
+  margin: 0 0 16px;
+}
+
+.dashboard-error {
+  color: #b23a34;
 }
