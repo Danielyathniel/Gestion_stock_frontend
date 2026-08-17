@@ -19,7 +19,6 @@ function toFrontend(article) {
 
 function toBackend(form) {
   return {
-    reference: form.reference,
     nom: form.nom,
     description: form.description,
     categorie_id: form.categorieId,
@@ -40,6 +39,10 @@ export async function fetchArticles({ search = "", categorieId = "", stock = "" 
     },
   });
   return data.map(toFrontend);
+}
+export async function fetchNextReference() {
+  const { data } = await api.get("/articles/next-reference");
+  return data.reference;
 }
 
 export async function createArticle(form) {

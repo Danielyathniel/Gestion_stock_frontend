@@ -23,6 +23,7 @@ export default function CategoriesPage() {
   const [mounted, setMounted] = useState(false);
   const [pageError, setPageError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [deleteError, setDeleteError] = useState(null); // 🔴 NOUVEAU : pour l'erreur de suppression
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setMounted(true));
@@ -45,6 +46,11 @@ export default function CategoriesPage() {
   function showSuccess(message) {
     setSuccessMessage(message);
     window.setTimeout(() => setSuccessMessage(""), 3000);
+  }
+
+  function showPageError(message) {
+    setPageError(message);
+    window.setTimeout(() => setPageError(""), 4000);
   }
 
   const filteredCategories = useMemo(() => {
@@ -82,14 +88,18 @@ export default function CategoriesPage() {
       setFormError("Le nom de la catégorie est obligatoire.");
       return;
     }
-
+    const hasAtLeastOneLetter = /[a-zA-ZÀ-ÿ]/.test(trimmed);
+      if (!hasAtLeastOneLetter) {
+        setFormError("Le nom de la catégorie doit contenir au moins une lettre.");
+        return;
+      }
     const isDuplicate = categories.some(
       (cat) =>
         cat.nom.toLowerCase() === trimmed.toLowerCase() && cat.id !== modal.category?.id
     );
 
     if (isDuplicate) {
-      setFormError("Une catégorie existe déjà.");
+      setFormError("Cette catégorie existe déjà.");
       return;
     }
 
@@ -133,6 +143,8 @@ export default function CategoriesPage() {
 
   async function confirmDelete() {
     const target = deleteTarget;
+    
+    // Fermer la modale de confirmation
     setDeleteTarget((prev) => (prev ? { ...prev, closing: true } : prev));
 
     window.setTimeout(() => {
@@ -149,10 +161,12 @@ export default function CategoriesPage() {
       }, EXIT_DURATION);
     } catch (err) {
       setRemovingId(null);
-      setPageError(
-        err.response?.data?.message ||
-          "La suppression a échoué. Vérifie que la catégorie n'est pas utilisée par des articles."
-      );
+      // 🔴 AFFICHER L'ERREUR DANS UNE MODALE
+      setDeleteError({
+        title: "⚠️ Impossible de supprimer",
+        message: err.response?.data?.message || 
+          "Cette catégorie est utilisée par des articles. Supprimez ou réassignez les articles avant de supprimer la catégorie."
+      });
     }
   }
 
@@ -245,6 +259,7 @@ export default function CategoriesPage() {
         </div>
       </div>
 
+      {/* MODALE AJOUT / MODIFICATION */}
       {modal && (
         <div
           className={`modal-overlay${modal.closing ? " is-closing" : ""}`}
@@ -292,6 +307,7 @@ export default function CategoriesPage() {
         </div>
       )}
 
+      {/* MODALE DE CONFIRMATION DE SUPPRESSION */}
       {deleteTarget && (
         <div
           className={`modal-overlay${deleteTarget.closing ? " is-closing" : ""}`}
@@ -317,6 +333,40 @@ export default function CategoriesPage() {
               </button>
               <button type="button" className="btn btn-danger" onClick={confirmDelete}>
                 Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🔴 MODALE D'ERREUR DE SUPPRESSION */}
+      {deleteError && (
+        <div
+          className="modal-overlay"
+          onClick={() => setDeleteError(null)}
+        >
+          <div
+            className="modal-box modal-box--danger"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="error-modal-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-icon-error"></div>
+            <h2 id="error-modal-title" className="modal-title modal-title--danger">
+              {deleteError.title}
+            </h2>
+            <p className="modal-text modal-text--danger">
+              {deleteError.message}
+            </p>
+            <div className="modal-actions modal-actions--center">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setDeleteError(null)}
+                autoFocus
+              >
+                OK
               </button>
             </div>
           </div>

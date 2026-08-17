@@ -121,7 +121,7 @@ export default function Sidebar() {
 
       <div className="sidebar-footer">
         <span className="sidebar-footer-dot" />
-        <span>StockFlow · v1.0.0</span>
+        <span>StockFlow </span>
       </div>
     </aside>
   );

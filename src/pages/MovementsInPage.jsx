@@ -134,8 +134,6 @@ async function handleSubmit(evt) {
       observation: form.observation,
     });
 
-    // Le stock de l'article ne change pas : le nouveau stock est un simple
-    // calcul d'affichage = stock actuel de l'article + quantité
     const nouveauStock = article.stock + qte;
 
     // Ajoute le mouvement reçu en haut de la liste
@@ -150,7 +148,7 @@ async function handleSubmit(evt) {
 
     setShowForm(false);
     setForm(emptyForm);
-    setTimeout(() => setConfirmation(null), 5000);
+    setTimeout(() => setConfirmation(null), 3000);
   } catch (err) {
     setSubmitError(err.response?.data?.message || "Erreur lors de l'enregistrement.");
   } finally {
@@ -181,10 +179,6 @@ async function handleSubmit(evt) {
             <CheckCircle2 size={18} className="stock-in-confirmation-icon" />
             <div>
               <p className="stock-in-confirmation-title">Entrée enregistrée avec succès.</p>
-              <p className="stock-in-confirmation-detail">
-                {confirmation.article} : {confirmation.ancienStock} + {confirmation.quantite} ={" "}
-                <span>{confirmation.nouveauStock} unités</span>
-              </p>
             </div>
           </div>
         )}
@@ -217,7 +211,7 @@ async function handleSubmit(evt) {
               <thead>
                 <tr>
                   <th>Article</th>
-                  <th>Quantité</th>
+                  <th>Quantité Entrée</th>
                   <th>Date</th>
                   <th>Motif</th>
                   <th>Observation</th>

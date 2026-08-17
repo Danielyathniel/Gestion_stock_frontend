@@ -186,10 +186,6 @@ export default function MovementsOutPage() {
             <CheckCircle2 size={18} className="stock-out-confirmation-icon" />
             <div>
               <p className="stock-out-confirmation-title">Sortie enregistrée avec succès.</p>
-              <p className="stock-out-confirmation-detail">
-                {confirmation.article} : {confirmation.ancienStock} − {confirmation.quantite} ={" "}
-                <span>{confirmation.nouveauStock} unités</span>
-              </p>
             </div>
           </div>
         )}
@@ -222,7 +218,7 @@ export default function MovementsOutPage() {
               <thead>
                 <tr>
                   <th>Article</th>
-                  <th>Quantité</th>
+                  <th>Quantité sortie</th>
                   <th>Date</th>
                   <th>Motif</th>
                   <th>Observation</th>

@@ -5,6 +5,7 @@ import {
   createArticle,
   updateArticle,
   deleteArticle,
+  fetchNextReference,
 } from "../services/articleService";
 import { fetchCategories } from "../services/categorieService";
 
@@ -75,7 +76,7 @@ export default function ArticlesPage() {
       setArticles(articlesData);
       setCategoriesList(categoriesData);
     } catch (err) {
-      setLoadError("Impossible de charger les articles. Vérifie que l'API tourne bien.");
+      setLoadError("Impossible de charger les articles.");
     } finally {
       setLoading(false);
     }
@@ -104,10 +105,16 @@ export default function ArticlesPage() {
     [articles]
   );
 
-  function openAddModal() {
+  async function openAddModal() {
     setForm(emptyForm(categoriesList));
     setFormError("");
     setModal({ mode: "add" });
+     try {
+    const reference = await fetchNextReference();
+    setForm((prev) => ({ ...prev, reference }));
+  } catch {
+    setFormError("Impossible de générer la référence, réessaie.");
+  }
   }
 
   function showSuccess(message) {
@@ -148,14 +155,13 @@ export default function ArticlesPage() {
     e.preventDefault();
 
     if (
-      !form.reference.trim() ||
       !form.nom.trim() ||
       !form.description.trim() ||
       !form.categorieId ||
-      form.stock === "" ||
+      form.stockActuel === "" ||
       form.stockMin === ""
     ) {
-      setFormError("Tous les champs sont obligatoires, sauf les prix.");
+      setFormError("Tous les champs sont obligatoires");
       return;
     }
 
@@ -250,7 +256,7 @@ export default function ArticlesPage() {
       {alertCount > 0 && (
         <div className="stock-alert-banner">
           <span className="stock-alert-dot" aria-hidden="true" />
-          {alertCount} article{alertCount > 1 ? "s" : ""} en rupture ou en stock faible
+          {alertCount} article{alertCount > 1 ? "s" : ""}  en stock faible
         </div>
       )}
 
@@ -303,8 +309,8 @@ export default function ArticlesPage() {
               <th className="col-ref">Référence</th>
               <th>Article</th>
               <th>Catégorie</th>
-              <th className="col-num">Stock</th>
-              <th className="col-num">Stock min.</th>
+              <th className="col-num">Stock Actuel</th>
+              <th className="col-num">Stock min</th>
               <th className="col-actions">Actions</th>
             </tr>
           </thead>
@@ -390,10 +396,8 @@ export default function ArticlesPage() {
                     type="text"
                     className="modal-input"
                     value={form.reference}
-                    onChange={(e) => updateField("reference", e.target.value)}
-                    disabled={saving}
-                    required
-                    autoFocus
+                    disabled
+                    readOnly
                   />
                 </div>
                 <div className="form-field">
