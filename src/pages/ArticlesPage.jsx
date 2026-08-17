@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "./ArticlesPage.css";
 import {
   fetchArticles,
@@ -8,6 +8,7 @@ import {
   fetchNextReference,
 } from "../services/articleService";
 import { fetchCategories } from "../services/categorieService";
+import { MoreVertical, Eye, Pencil, Trash2 } from "lucide-react";
 
 const UNITES = ["unité", "boîte", "paquet", "carton", "kg", "litre"];
 const EXIT_DURATION = 220;
@@ -60,10 +61,23 @@ export default function ArticlesPage() {
   const [viewTarget, setViewTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [removingId, setRemovingId] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRef = useRef(null);
 
   useEffect(() => {
     loadAll();
   }, []);
+
+  useEffect(() => {
+    if (!openMenuId) return;
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpenMenuId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [openMenuId]);
 
   async function loadAll() {
     setLoading(true);
@@ -352,21 +366,44 @@ export default function ArticlesPage() {
                     </td>
                     <td className="col-num">{art.stockMin}</td>
                     <td className="col-actions">
-                      <button type="button" className="link-action" onClick={() => setViewTarget(art)}>
-                        Voir
-                      </button>
-                      <span className="action-sep">/</span>
-                      <button type="button" className="link-action" onClick={() => openEditModal(art)}>
-                        Modifier
-                      </button>
-                      <span className="action-sep">/</span>
-                      <button
-                        type="button"
-                        className="link-action link-action-danger"
-                        onClick={() => setDeleteTarget(art)}
-                      >
-                        Supprimer
-                      </button>
+                      <div className="action-menu-wrapper" ref={openMenuId === art.id ? menuRef : null}>
+                        <button
+                          type="button"
+                          className="action-menu-trigger"
+                          onClick={() => setOpenMenuId(openMenuId === art.id ? null : art.id)}
+                          aria-label="Actions"
+                        >
+                          <MoreVertical size={18} />
+                        </button>
+                        {openMenuId === art.id && (
+                          <div className="action-menu-dropdown">
+                            <button
+                              type="button"
+                              className="action-menu-item"
+                              onClick={() => { setOpenMenuId(null); setViewTarget(art); }}
+                            >
+                              <Eye size={15} />
+                              Voir
+                            </button>
+                            <button
+                              type="button"
+                              className="action-menu-item"
+                              onClick={() => { setOpenMenuId(null); openEditModal(art); }}
+                            >
+                              <Pencil size={15} />
+                              Modifier
+                            </button>
+                            <button
+                              type="button"
+                              className="action-menu-item action-menu-item--danger"
+                              onClick={() => { setOpenMenuId(null); setDeleteTarget(art); }}
+                            >
+                              <Trash2 size={15} />
+                              Supprimer
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

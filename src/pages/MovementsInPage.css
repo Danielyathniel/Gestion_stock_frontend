@@ -430,3 +430,41 @@
   font-size: 0.8rem;
   color: #5e6a66;
 }
+
+@media (max-width: 768px) {
+  .stock-in-page {
+    padding: 16px;
+  }
+
+  .stock-in-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stock-in-add-btn {
+    justify-content: center;
+  }
+
+  .stock-in-table {
+    min-width: 600px;
+  }
+
+  .stock-in-modal {
+    max-width: none;
+    border-radius: 0.75rem;
+    margin: 0.5rem;
+  }
+
+  .stock-in-modal-header {
+    padding: 1rem;
+    border-radius: 0.75rem 0.75rem 0 0;
+  }
+
+  .stock-in-form {
+    padding: 1rem;
+  }
+
+  .stock-in-details {
+    padding: 1rem;
+  }
+}

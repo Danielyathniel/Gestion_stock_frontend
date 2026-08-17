@@ -1,82 +1,86 @@
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap");
 
+/* ── Écran ── */
+
 .login-screen {
   position: relative;
   min-height: 100vh;
   display: grid;
   place-items: center;
   font-family: "Inter", system-ui, sans-serif;
-  background: linear-gradient(150deg, #3a574b 0%, #507064 50%, #6d867c 100%);
   padding: 24px;
   overflow: hidden;
+  background-image:
+    linear-gradient(135deg, rgba(20, 40, 32, 0.92), rgba(30, 58, 46, 0.88)),
+    url("https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1600&q=80");
+  background-size: cover;
+  background-position: center;
 }
 
-.login-screen::before,
-.login-screen::after {
-  content: "";
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(70px);
-  z-index: 0;
-  pointer-events: none;
-}
+/* ── Carte ── */
 
-.login-screen::before {
-  width: 520px;
-  height: 520px;
-  background: rgba(125, 184, 154, 0.22);
-  top: -140px;
-  left: -120px;
-}
-
-.login-screen::after {
-  width: 440px;
-  height: 440px;
-  background: rgba(20, 24, 27, 0.16);
-  bottom: -130px;
-  right: -100px;
-}
-
-.login-panel {
+.login-card-wrap {
   position: relative;
   z-index: 1;
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  max-width: 420px;
 }
 
 .login-card {
   width: 100%;
-  max-width: 440px;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 18px;
-  padding: 48px 44px;
+  padding: 44px 40px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  box-shadow: 0 24px 60px rgba(12, 32, 25, 0.35);
+  gap: 22px;
+  box-shadow:
+    0 24px 60px rgba(10, 24, 18, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* ── En-tête avec logo ── */
+
+.login-card-head {
+  text-align: center;
+}
+
+.login-brand-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #2e6350, #3f8b72);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px rgba(46, 99, 80, 0.3);
 }
 
 .login-card-head h1 {
   font-family: "Space Grotesk", sans-serif;
-  font-size: 28px;
-  font-weight: 600;
+  font-size: 26px;
+  font-weight: 700;
   color: #14181b;
-  margin: 0 0 10px;
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
 }
 
 .login-card-head p {
-  font-size: 15px;
+  font-size: 14px;
   color: #5e6a66;
   margin: 0;
 }
 
+/* ── Champs ── */
+
 .login-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 7px;
 }
 
 .login-field-label {
@@ -89,13 +93,13 @@
 .login-field input {
   font-family: "Inter", sans-serif;
   font-size: 15px;
-  padding: 16px 14px;
-  border-radius: 8px;
+  padding: 14px;
+  border-radius: 10px;
   border: 1px solid #dde2df;
   background: #fbfbfa;
   color: #14181b;
   outline: none;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .login-field input::placeholder {
@@ -132,16 +136,19 @@
   border: none;
   cursor: pointer;
   padding: 0;
+  border-radius: 6px;
+  transition: background 0.15s ease;
 }
 
 .login-password-toggle:hover {
-  color: #275546;
-  text-decoration: none;
+  background: #e4eee9;
 }
+
+/* ── Messages ── */
 
 .login-message {
   font-size: 13px;
-  margin: -6px 0 0;
+  margin: -4px 0 0;
   line-height: 1.5;
 }
 
@@ -149,9 +156,7 @@
   color: #b23a34;
 }
 
-.login-message-notice {
-  color: #2e6350;
-}
+/* ── Bouton ── */
 
 .login-submit {
   font-family: "Inter", sans-serif;
@@ -160,20 +165,43 @@
   color: #ffffff;
   background: #2e6350;
   border: none;
-  border-radius: 8px;
-  padding: 18px 16px;
+  border-radius: 10px;
+  padding: 16px;
   cursor: pointer;
-  transition: background 0.15s ease, opacity 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
 
 .login-submit:hover:not(:disabled) {
   background: #275546;
+  box-shadow: 0 4px 16px rgba(46, 99, 80, 0.3);
+  transform: translateY(-1px);
+}
+
+.login-submit:active:not(:disabled) {
+  transform: scale(0.98);
 }
 
 .login-submit:disabled {
   opacity: 0.7;
   cursor: default;
 }
+
+/* ── Pied de page ── */
+
+.login-footer {
+  margin: 0;
+  text-align: center;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: #9aa39f;
+}
+
+/* ── Responsive ── */
 
 @media (max-width: 480px) {
   .login-screen {
@@ -182,5 +210,11 @@
 
   .login-card {
     padding: 32px 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-submit {
+    transition: none !important;
   }
 }

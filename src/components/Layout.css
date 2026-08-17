@@ -16,3 +16,9 @@
   padding: 32px;
   animation: fadeInUp 0.35s ease both;
 }
+
+@media (max-width: 768px) {
+  .app-content {
+    padding: 16px;
+  }
+}

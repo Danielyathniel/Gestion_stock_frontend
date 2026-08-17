@@ -14,6 +14,47 @@
   border-bottom: 1px solid var(--border);
 }
 
+/* ---------- Hamburger ---------- */
+
+.header-hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.header-hamburger:hover {
+  background: var(--accent-soft);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 0 16px;
+  }
+
+  .header-hamburger {
+    display: flex;
+  }
+
+  .header-user-name-desktop {
+    display: none;
+  }
+}
+
 /* ---------- Titre de page ---------- */
 
 .header-page {

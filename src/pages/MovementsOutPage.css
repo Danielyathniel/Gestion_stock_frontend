@@ -421,3 +421,41 @@
   color: #64748b;
 
 }
+
+@media (max-width: 768px) {
+  .stock-out-page {
+    padding: 16px;
+  }
+
+  .stock-out-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stock-out-add-btn {
+    justify-content: center;
+  }
+
+  .stock-out-table {
+    min-width: 600px;
+  }
+
+  .stock-out-modal {
+    max-width: none;
+    border-radius: 0.75rem;
+    margin: 0.5rem;
+  }
+
+  .stock-out-modal-header {
+    padding: 1rem;
+    border-radius: 0.75rem 0.75rem 0 0;
+  }
+
+  .stock-out-form {
+    padding: 1rem;
+  }
+
+  .stock-out-details {
+    padding: 1rem;
+  }
+}

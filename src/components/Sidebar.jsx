@@ -61,18 +61,20 @@ const movementLinks = [
   { to: "/mouvements/sorties", label: "Sortie de stock" },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ open, onClose }) {
   const [movementsOpen, setMovementsOpen] = useState(true);
 
   return (
-    <aside className="sidebar">
-      <div className="sidebar-brand">
-        <div className="sidebar-brand-mark">
-          <span className="sidebar-brand-logo">SF</span>
-          <span className="sidebar-brand-name">STOCKFLOW</span>
+    <>
+      <div className={`sidebar-backdrop${open ? " is-visible" : ""}`} onClick={onClose} />
+      <aside className={`sidebar${open ? " is-open" : ""}`}>
+        <div className="sidebar-brand">
+          <div className="sidebar-brand-mark">
+            <span className="sidebar-brand-logo">SF</span>
+            <span className="sidebar-brand-name">STOCKFLOW</span>
+          </div>
+          <p className="sidebar-brand-tag">Gestion de stock</p>
         </div>
-        <p className="sidebar-brand-tag">Gestion de stock</p>
-      </div>
 
       <nav className="sidebar-nav">
         <span className="sidebar-section-label">Navigation</span>
@@ -123,6 +125,7 @@ export default function Sidebar() {
         <span className="sidebar-footer-dot" />
         <span>StockFlow </span>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

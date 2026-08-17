@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchCategories,
   createCategory,
   updateCategory,
   deleteCategory,
 } from "../services/categorieService";
+import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 import "./CategoriesPage.css";
 
 const EXIT_DURATION = 220;
@@ -20,6 +21,8 @@ export default function CategoriesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [removingId, setRemovingId] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRef = useRef(null);
   const [mounted, setMounted] = useState(false);
   const [pageError, setPageError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -33,6 +36,17 @@ export default function CategoriesPage() {
   useEffect(() => {
     loadCategories();
   }, []);
+
+  useEffect(() => {
+    if (!openMenuId) return;
+    function handleClickOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpenMenuId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [openMenuId]);
 
   function loadCategories() {
     setIsLoading(true);
@@ -235,21 +249,36 @@ export default function CategoriesPage() {
                     <td className="col-id">{index + 1}</td>
                     <td>{cat.nom}</td>
                     <td className="col-actions">
-                      <button
-                        type="button"
-                        className="link-action"
-                        onClick={() => openEditModal(cat)}
-                      >
-                        Modifier
-                      </button>
-                      <span className="action-sep">/</span>
-                      <button
-                        type="button"
-                        className="link-action link-action-danger"
-                        onClick={() => requestDelete(cat)}
-                      >
-                        Supprimer
-                      </button>
+                      <div className="action-menu-wrapper" ref={openMenuId === cat.id ? menuRef : null}>
+                        <button
+                          type="button"
+                          className="action-menu-trigger"
+                          onClick={() => setOpenMenuId(openMenuId === cat.id ? null : cat.id)}
+                          aria-label="Actions"
+                        >
+                          <MoreVertical size={18} />
+                        </button>
+                        {openMenuId === cat.id && (
+                          <div className="action-menu-dropdown">
+                            <button
+                              type="button"
+                              className="action-menu-item"
+                              onClick={() => { setOpenMenuId(null); openEditModal(cat); }}
+                            >
+                              <Pencil size={15} />
+                              Modifier
+                            </button>
+                            <button
+                              type="button"
+                              className="action-menu-item action-menu-item--danger"
+                              onClick={() => { setOpenMenuId(null); requestDelete(cat); }}
+                            >
+                              <Trash2 size={15} />
+                              Supprimer
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

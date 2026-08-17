@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   LineChart,
   Line,
@@ -71,13 +72,13 @@ export default function DashboardPage() {
   }
 
   const stats = [
-    { label: "Articles", value: data.totalArticles, icon: Boxes },
-    { label: "Catégories", value: data.totalCategories, icon: FolderTree },
-    { label: "Entrées", value: data.totalEntrees, icon: ArrowDownToLine },
-    { label: "Sorties", value: data.totalSorties, icon: ArrowUpFromLine },
-    { label: "Valeur du stock", value: `${data.valeurStock.toLocaleString("fr-FR")} F`, icon: Wallet },
-    { label: "En rupture", value: data.enRupture, icon: PackageX },
-    { label: "Presque en rupture", value: data.presqueRupture, icon: AlertTriangle },
+    { label: "Articles", value: data.totalArticles, icon: Boxes, to: "/articles", color: "#2e6350" },
+    { label: "Catégories", value: data.totalCategories, icon: FolderTree, to: "/categories", color: "#4a7c8f" },
+    { label: "Entrées", value: data.totalEntrees, icon: ArrowDownToLine, to: "/mouvements/entrees", color: "#5a8f6a" },
+    { label: "Sorties", value: data.totalSorties, icon: ArrowUpFromLine, to: "/mouvements/sorties", color: "#c98a5e" },
+    { label: "Valeur du stock", value: `${data.valeurStock.toLocaleString("fr-FR")} F`, icon: Wallet, color: "#6b5b95" },
+    { label: "En rupture", value: data.enRupture, icon: PackageX, color: "#b23a34" },
+    { label: "Presque en rupture", value: data.presqueRupture, icon: AlertTriangle, color: "#c4882f" },
   ];
 
   return (
@@ -89,8 +90,20 @@ export default function DashboardPage() {
         <div className="stat-grid">
           {stats.map((s) => {
             const Icon = s.icon;
+            const style = { "--stat-color": s.color };
+            if (s.to) {
+              return (
+                <Link key={s.label} to={s.to} className="stat-card stat-card--link" style={style}>
+                  <div className="stat-card-top">
+                    <Icon size={18} className="stat-card-icon" />
+                    <span className="stat-label">{s.label}</span>
+                  </div>
+                  <span className="stat-value">{s.value}</span>
+                </Link>
+              );
+            }
             return (
-              <div key={s.label} className="stat-card">
+              <div key={s.label} className="stat-card stat-card--static" style={style}>
                 <div className="stat-card-top">
                   <Icon size={18} className="stat-card-icon" />
                   <span className="stat-label">{s.label}</span>
@@ -103,19 +116,19 @@ export default function DashboardPage() {
 
         <div className="chart-grid">
           <div className="chart-card">
-            <h2 className="chart-title">Entrées vs sorties (7 derniers jours)</h2>
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={data.evolution}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Legend />
-                <Line type="natural" dataKey="entrees" stroke="#2e6350" strokeWidth={2} name="Entrées" />
-                <Line type="natural" dataKey="sorties" stroke="#c98a5e" strokeWidth={2} name="Sorties" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+  <h2 className="chart-title">Entrées vs sorties (7 derniers jours)</h2>
+  <ResponsiveContainer width="100%" height={280}>
+    <BarChart data={data.evolution}>
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="date" />
+      <YAxis allowDecimals={false} />
+      <Tooltip />
+      <Legend />
+      <Bar dataKey="entrees" fill="#2e6350" radius={[6, 6, 0, 0]} name="Entrées" />
+      <Bar dataKey="sorties" fill="#c98a5e" radius={[6, 6, 0, 0]} name="Sorties" />
+    </BarChart>
+  </ResponsiveContainer>
+</div>
 
           <div className="chart-card">
             <h2 className="chart-title">Stock par catégorie</h2>

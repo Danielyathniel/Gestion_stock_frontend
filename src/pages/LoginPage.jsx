@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import authService from "../services/authService";
+import { Package } from "lucide-react";
 import "./LoginPage.css";
 
 export default function LoginPage() {
@@ -48,11 +49,14 @@ export default function LoginPage() {
 
   return (
     <div className="login-screen">
-      <main className="login-panel">
+      <main className="login-card-wrap">
         <form className="login-card" onSubmit={handleSubmit} noValidate>
           <div className="login-card-head">
-            <h1>Connexion</h1>
-            <p>Accède à ton espace de gestion de stock.</p>
+            <div className="login-brand-icon">
+              <Package size={28} strokeWidth={1.5} />
+            </div>
+            <h1>StockFlow</h1>
+            <p>Connecte-toi pour gérer ton stock.</p>
           </div>
 
           <label className="login-field">
@@ -100,8 +104,11 @@ export default function LoginPage() {
           {error && <p className="login-message login-message-error">{error}</p>}
 
           <button type="submit" className="login-submit" disabled={loading}>
+            <Package size={18} />
             {loading ? "Connexion en cours…" : "Se connecter"}
           </button>
+
+          <p className="login-footer">StockFlow &mdash; Gestion de stock intelligente</p>
         </form>
       </main>
     </div>
