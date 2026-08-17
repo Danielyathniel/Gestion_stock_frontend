@@ -8,7 +8,20 @@ import {
   fetchNextReference,
 } from "../services/articleService";
 import { fetchCategories } from "../services/categorieService";
-import { MoreVertical, Eye, Pencil, Trash2 } from "lucide-react";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import ArticleReportPDF from "../components/reports/ArticleReportPDF";
+import { exportToExcel } from "../services/export/exportService";
+import {
+  MoreVertical,
+  Eye,
+  Pencil,
+  Trash2,
+  Printer,
+  FileText,
+  FileSpreadsheet,
+  X,
+  ChevronDown,
+} from "lucide-react";
 
 const UNITES = ["unité", "boîte", "paquet", "carton", "kg", "litre"];
 const EXIT_DURATION = 220;
@@ -18,23 +31,25 @@ function emptyForm(categoriesList) {
     reference: "",
     nom: "",
     description: "",
-    categorieId: categoriesList[0]?.id ?? "",
-    prixAchat: "",
-    prixVente: "",
-    stock: "",
-    stockMin: "",
+    categorieId: categoriesList[0]?.id ? String(categoriesList[0].id) : "",
+    prixAchat: "0",
+    prixVente: "0",
+    stock: "0",
+    stockMin: "0",
     unite: UNITES[0],
   };
 }
 
 function getStockStatus(article) {
-  if (article.stock <= 0) return "rupture";
-  if (article.stock <= article.stockMin) return "faible";
+  const stock = Number(article.stock);
+  const stockMin = Number(article.stockMin);
+  if (stock <= 0) return "rupture";
+  if (stock <= stockMin) return "faible";
   return "ok";
 }
 
 function formatMontant(value) {
-  return new Intl.NumberFormat("fr-FR").format(value) + " FCFA";
+  return new Intl.NumberFormat("fr-FR").format(Number(value) || 0) + " FCFA";
 }
 
 function formatDate(value) {
@@ -64,20 +79,28 @@ export default function ArticlesPage() {
   const [openMenuId, setOpenMenuId] = useState(null);
   const menuRef = useRef(null);
 
+  const [showPrintMenu, setShowPrintMenu] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const printMenuRef = useRef(null);
+
   useEffect(() => {
     loadAll();
   }, []);
 
+  // Gestion des clics extérieurs pour fermer le menu d'actions et le menu d'impression
   useEffect(() => {
-    if (!openMenuId) return;
     function handleClickOutside(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setOpenMenuId(null);
       }
+      if (printMenuRef.current && !printMenuRef.current.contains(e.target)) {
+        setShowPrintMenu(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [openMenuId]);
+  }, []);
 
   async function loadAll() {
     setLoading(true);
@@ -101,8 +124,8 @@ export default function ArticlesPage() {
     return articles.filter((art) => {
       const matchesSearch =
         !query ||
-        art.nom.toLowerCase().includes(query) ||
-        art.reference.toLowerCase().includes(query);
+        art.nom?.toLowerCase().includes(query) ||
+        art.reference?.toLowerCase().includes(query);
       const matchesCategory =
         categoryFilter === "Toutes" || art.categorie === categoryFilter;
       const status = getStockStatus(art);
@@ -120,15 +143,16 @@ export default function ArticlesPage() {
   );
 
   async function openAddModal() {
-    setForm(emptyForm(categoriesList));
+    const initialForm = emptyForm(categoriesList);
+    setForm(initialForm);
     setFormError("");
     setModal({ mode: "add" });
-     try {
-    const reference = await fetchNextReference();
-    setForm((prev) => ({ ...prev, reference }));
-  } catch {
-    setFormError("Impossible de générer la référence, réessaie.");
-  }
+    try {
+      const reference = await fetchNextReference();
+      setForm((prev) => ({ ...prev, reference }));
+    } catch {
+      setFormError("Impossible de générer la référence.");
+    }
   }
 
   function showSuccess(message) {
@@ -138,15 +162,15 @@ export default function ArticlesPage() {
 
   function openEditModal(article) {
     setForm({
-      reference: article.reference,
-      nom: article.nom,
-      description: article.description,
-      categorieId: article.categorieId,
-      prixAchat: String(article.prixAchat),
-      prixVente: String(article.prixVente),
-      stock: String(article.stock),
-      stockMin: String(article.stockMin),
-      unite: article.unite,
+      reference: article.reference || "",
+      nom: article.nom || "",
+      description: article.description || "",
+      categorieId: String(article.categorieId ?? categoriesList[0]?.id ?? ""),
+      prixAchat: String(article.prixAchat ?? 0),
+      prixVente: String(article.prixVente ?? 0),
+      stock: String(article.stock ?? 0),
+      stockMin: String(article.stockMin ?? 0),
+      unite: article.unite || UNITES[0],
     });
     setFormError("");
     setModal({ mode: "edit", article });
@@ -172,23 +196,32 @@ export default function ArticlesPage() {
       !form.nom.trim() ||
       !form.description.trim() ||
       !form.categorieId ||
-      form.stockActuel === "" ||
+      form.stock === "" ||
       form.stockMin === ""
     ) {
-      setFormError("Tous les champs sont obligatoires");
+      setFormError("Tous les champs obligatoires doivent être renseignés.");
       return;
     }
 
     setSaving(true);
     setFormError("");
 
+    const payload = {
+      ...form,
+      categorieId: Number(form.categorieId),
+      prixAchat: Number(form.prixAchat) || 0,
+      prixVente: Number(form.prixVente) || 0,
+      stock: Number(form.stock) || 0,
+      stockMin: Number(form.stockMin) || 0,
+    };
+
     try {
       if (modal.mode === "add") {
-        const created = await createArticle(form);
+        const created = await createArticle(payload);
         setArticles((prev) => [...prev, created]);
         showSuccess("Article ajouté avec succès.");
       } else {
-        const updated = await updateArticle(modal.article.id, form);
+        const updated = await updateArticle(modal.article.id, payload);
         setArticles((prev) =>
           prev.map((art) => (art.id === updated.id ? updated : art))
         );
@@ -198,7 +231,9 @@ export default function ArticlesPage() {
     } catch (err) {
       const apiErrors = err.response?.data?.errors;
       const firstError = apiErrors ? Object.values(apiErrors)[0]?.[0] : null;
-      setFormError(firstError || err.response?.data?.message || "Une erreur est survenue.");
+      setFormError(
+        firstError || err.response?.data?.message || "Une erreur est survenue."
+      );
     } finally {
       setSaving(false);
     }
@@ -216,9 +251,7 @@ export default function ArticlesPage() {
 
   async function confirmDelete() {
     const target = deleteTarget;
-    setDeleteTarget((prev) => (prev ? { ...prev, closing: true } : prev));
-
-    window.setTimeout(() => setDeleteTarget(null), EXIT_DURATION);
+    closeDeleteModal();
 
     try {
       await deleteArticle(target.id);
@@ -229,8 +262,7 @@ export default function ArticlesPage() {
         showSuccess("Article supprimé avec succès.");
       }, EXIT_DURATION);
     } catch (err) {
-      // si la suppression échoue côté API (ex: article lié à des mouvements),
-      // on pourrait afficher err.response.data.message ici
+      setFormError("Impossible de supprimer cet article.");
     }
   }
 
@@ -262,173 +294,293 @@ export default function ArticlesPage() {
   return (
     <div className="articles-page">
       <div className="articles-content">
-        <h1 className="page-title">Articles</h1>
-        <p className="page-subtitle">Fiches produits et niveaux de stock.</p>
+        <div className="articles-header">
+          <div className="articles-header-left">
+            <h1 className="page-title">Articles</h1>
+            <p className="page-subtitle">Fiches produits et niveaux de stock.</p>
+          </div>
 
-      {successMessage && <p className="modal-success">{successMessage}</p>}
+          <div className="articles-header-right">
+            <div className="print-menu-container" ref={printMenuRef}>
+              <button
+                type="button"
+                className="btn btn-print-small"
+                onClick={() => setShowPrintMenu(!showPrintMenu)}
+                disabled={loading || articles.length === 0}
+              >
+                <Printer size={16} />
+                Imprimer
+                <ChevronDown
+                  size={14}
+                  className={`print-chevron ${showPrintMenu ? "rotated" : ""}`}
+                />
+              </button>
 
-      {alertCount > 0 && (
-        <div className="stock-alert-banner">
-          <span className="stock-alert-dot" aria-hidden="true" />
-          {alertCount} article{alertCount > 1 ? "s" : ""}  en stock faible
+              {showPrintMenu && (
+                <div className="print-menu-dropdown">
+                  <div className="print-menu-header">
+                    <span>Exporter</span>
+                    <button
+                      type="button"
+                      className="print-menu-close"
+                      onClick={() => setShowPrintMenu(false)}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <div className="print-menu-options">
+                    <PDFDownloadLink
+                      document={
+                        <ArticleReportPDF
+                          articles={articles}
+                          entreprise="STOCKFLOW"
+                        />
+                      }
+                      fileName={`RAPPORT_ARTICLES_${
+                        new Date().toISOString().split("T")[0]
+                      }.pdf`}
+                      className="print-option"
+                      onClick={() => setShowPrintMenu(false)}
+                    >
+                      {({ loading: pdfLoading }) => (
+                        <>
+                          <FileText size={16} />
+                          <span>{pdfLoading ? "Génération..." : "PDF"}</span>
+                        </>
+                      )}
+                    </PDFDownloadLink>
+
+                    <button
+                      type="button"
+                      className="print-option"
+                      onClick={() => {
+                        setShowPrintMenu(false);
+                        setIsGenerating(true);
+                        try {
+                          exportToExcel(articles, "STOCKFLOW");
+                        } catch (error) {
+                          console.error("Erreur export Excel:", error);
+                        } finally {
+                          setIsGenerating(false);
+                        }
+                      }}
+                    >
+                      <FileSpreadsheet size={16} />
+                      <span>{isGenerating ? "Génération..." : "Excel"}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      )}
 
-      <div className="articles-toolbar">
-        <div className="articles-search">
-          <span className="articles-search-icon" aria-hidden="true">⌕</span>
-          <input
-            type="text"
-            placeholder="Rechercher par nom ou référence…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            aria-label="Rechercher un article"
-          />
+        {successMessage && <p className="modal-success">{successMessage}</p>}
+
+        {alertCount > 0 && (
+          <div className="stock-alert-banner">
+            <span className="stock-alert-dot" aria-hidden="true" />
+            {alertCount} article{alertCount > 1 ? "s" : ""} en stock faible
+          </div>
+        )}
+
+        <div className="articles-toolbar">
+          <div className="articles-search">
+            <span className="articles-search-icon" aria-hidden="true">
+              ⌕
+            </span>
+            <input
+              type="text"
+              placeholder="Rechercher par nom ou référence…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Rechercher un article"
+            />
+          </div>
+
+          <select
+            className="articles-select"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            aria-label="Filtrer par catégorie"
+          >
+            <option value="Toutes">Toutes les catégories</option>
+            {categoriesList.map((cat) => (
+              <option key={cat.id} value={cat.nom}>
+                {cat.nom}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="articles-select"
+            value={stockFilter}
+            onChange={(e) => setStockFilter(e.target.value)}
+            aria-label="Filtrer par niveau de stock"
+          >
+            <option value="Tous">Tous les stocks</option>
+            <option value="Faible">Stock faible</option>
+            <option value="Rupture">Rupture</option>
+          </select>
+
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={openAddModal}
+          >
+            + Ajouter un article
+          </button>
         </div>
 
-        <select
-          className="articles-select"
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          aria-label="Filtrer par catégorie"
-        >
-          <option value="Toutes">Toutes les catégories</option>
-          {categoriesList.map((cat) => (
-            <option key={cat.id} value={cat.nom}>
-              {cat.nom}
-            </option>
-          ))}
-        </select>
-
-        <select
-          className="articles-select"
-          value={stockFilter}
-          onChange={(e) => setStockFilter(e.target.value)}
-          aria-label="Filtrer par niveau de stock"
-        >
-          <option value="Tous">Tous les stocks</option>
-          <option value="Faible">Stock faible</option>
-          <option value="Rupture">Rupture</option>
-        </select>
-
-        <button type="button" className="btn btn-primary" onClick={openAddModal}>
-          + Ajouter un article
-        </button>
-      </div>
-
-      <div className="articles-table-wrap">
-        <table className="articles-table">
-          <thead>
-            <tr>
-              <th className="col-ref">Référence</th>
-              <th>Article</th>
-              <th>Catégorie</th>
-              <th className="col-num">Stock Actuel</th>
-              <th className="col-num">Stock min</th>
-              <th className="col-actions">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredArticles.length === 0 ? (
+        <div className="articles-table-wrap">
+          <table className="articles-table">
+            <thead>
               <tr>
-                <td colSpan={6} className="articles-empty">
-                  {search || categoryFilter !== "Toutes" || stockFilter !== "Tous"
-                    ? "Aucun article ne correspond à ces critères."
-                    : "Aucun article pour le moment. Ajoutes-en un pour commencer."}
-                </td>
+                <th className="col-ref">Référence</th>
+                <th>Article</th>
+                <th>Catégorie</th>
+                <th className="col-num">Stock Actuel</th>
+                <th className="col-num">Stock min</th>
+                <th className="col-actions">Actions</th>
               </tr>
-            ) : (
-              filteredArticles.map((art, index) => {
-                const status = getStockStatus(art);
-                return (
-                  <tr
-                    key={art.id}
-                    className={`row-enter${art.id === removingId ? " row-exit" : ""}`}
-                    style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
-                  >
-                    <td className="col-ref">{art.reference}</td>
-                    <td>
-                      <button
-                        type="button"
-                        className="article-name-btn"
-                        onClick={() => setViewTarget(art)}
-                      >
-                        {art.nom}
-                      </button>
-                    </td>
-                    <td>{art.categorie}</td>
-                    <td className="col-num">
-                      <span className={`stock-badge stock-badge-${status}`}>
-                        {art.stock}
-                        {status === "rupture" && " · rupture"}
-                        {status === "faible" && " · faible"}
-                      </span>
-                    </td>
-                    <td className="col-num">{art.stockMin}</td>
-                    <td className="col-actions">
-                      <div className="action-menu-wrapper" ref={openMenuId === art.id ? menuRef : null}>
+            </thead>
+            <tbody>
+              {filteredArticles.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="articles-empty">
+                    {search ||
+                    categoryFilter !== "Toutes" ||
+                    stockFilter !== "Tous"
+                      ? "Aucun article ne correspond à ces critères."
+                      : "Aucun article pour le moment. Ajoutes-en un pour commencer."}
+                  </td>
+                </tr>
+              ) : (
+                filteredArticles.map((art, index) => {
+                  const status = getStockStatus(art);
+                  return (
+                    <tr
+                      key={art.id}
+                      className={`row-enter${
+                        art.id === removingId ? " row-exit" : ""
+                      }`}
+                      style={{
+                        animationDelay: `${Math.min(index, 8) * 30}ms`,
+                      }}
+                    >
+                      <td className="col-ref">{art.reference}</td>
+                      <td>
                         <button
                           type="button"
-                          className="action-menu-trigger"
-                          onClick={() => setOpenMenuId(openMenuId === art.id ? null : art.id)}
-                          aria-label="Actions"
+                          className="article-name-btn"
+                          onClick={() => setViewTarget(art)}
                         >
-                          <MoreVertical size={18} />
+                          {art.nom}
                         </button>
-                        {openMenuId === art.id && (
-                          <div className="action-menu-dropdown">
-                            <button
-                              type="button"
-                              className="action-menu-item"
-                              onClick={() => { setOpenMenuId(null); setViewTarget(art); }}
-                            >
-                              <Eye size={15} />
-                              Voir
-                            </button>
-                            <button
-                              type="button"
-                              className="action-menu-item"
-                              onClick={() => { setOpenMenuId(null); openEditModal(art); }}
-                            >
-                              <Pencil size={15} />
-                              Modifier
-                            </button>
-                            <button
-                              type="button"
-                              className="action-menu-item action-menu-item--danger"
-                              onClick={() => { setOpenMenuId(null); setDeleteTarget(art); }}
-                            >
-                              <Trash2 size={15} />
-                              Supprimer
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                      </td>
+                      <td>{art.categorie}</td>
+                      <td className="col-num">
+                        <span className={`stock-badge stock-badge-${status}`}>
+                          {art.stock}
+                          {status === "rupture" && " · rupture"}
+                          {status === "faible" && " · faible"}
+                        </span>
+                      </td>
+                      <td className="col-num">{art.stockMin}</td>
+                      <td className="col-actions">
+                        <div
+                          className="action-menu-wrapper"
+                          ref={openMenuId === art.id ? menuRef : null}
+                        >
+                          <button
+                            type="button"
+                            className="action-menu-trigger"
+                            onClick={() =>
+                              setOpenMenuId(
+                                openMenuId === art.id ? null : art.id
+                              )
+                            }
+                            aria-label="Actions"
+                          >
+                            <MoreVertical size={18} />
+                          </button>
+                          {openMenuId === art.id && (
+                            <div className="action-menu-dropdown">
+                              <button
+                                type="button"
+                                className="action-menu-item"
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  setViewTarget(art);
+                                }}
+                              >
+                                <Eye size={15} />
+                                Voir
+                              </button>
+                              <button
+                                type="button"
+                                className="action-menu-item"
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  openEditModal(art);
+                                }}
+                              >
+                                <Pencil size={15} />
+                                Modifier
+                              </button>
+                              <button
+                                type="button"
+                                className="action-menu-item action-menu-item--danger"
+                                onClick={() => {
+                                  setOpenMenuId(null);
+                                  setDeleteTarget(art);
+                                }}
+                              >
+                                <Trash2 size={15} />
+                                Supprimer
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
+      {/* MODALE AJOUT / MODIFICATION */}
       {modal && (
-        <div className={`modal-overlay${modal.closing ? " is-closing" : ""}`} onClick={closeModal}>
+        <div
+          className={`modal-overlay${modal.closing ? " is-closing" : ""}`}
+          onClick={closeModal}
+        >
           <div
-            className={`modal-box modal-box-wide${modal.closing ? " is-closing" : ""}`}
+            className={`modal-box modal-box-wide${
+              modal.closing ? " is-closing" : ""
+            }`}
             role="dialog"
             aria-modal="true"
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="modal-title">
-              {modal.mode === "add" ? "Ajouter un article" : "Modifier l'article"}
+              {modal.mode === "add"
+                ? "Ajouter un article"
+                : "Modifier l'article"}
             </h2>
             <form onSubmit={handleSubmit}>
               <div className="form-grid">
                 <div className="form-field">
-                  <label className="modal-label">Référence / Code article<span className="required-mark" aria-hidden="true"> *</span></label>
+                  <label className="modal-label">
+                    Référence / Code article
+                    <span className="required-mark" aria-hidden="true">
+                      {" "}
+                      *
+                    </span>
+                  </label>
                   <input
                     type="text"
                     className="modal-input"
@@ -438,7 +590,13 @@ export default function ArticlesPage() {
                   />
                 </div>
                 <div className="form-field">
-                  <label className="modal-label">Nom<span className="required-mark" aria-hidden="true"> *</span></label>
+                  <label className="modal-label">
+                    Nom
+                    <span className="required-mark" aria-hidden="true">
+                      {" "}
+                      *
+                    </span>
+                  </label>
                   <input
                     type="text"
                     className="modal-input"
@@ -449,7 +607,13 @@ export default function ArticlesPage() {
                   />
                 </div>
                 <div className="form-field form-field-full">
-                  <label className="modal-label">Description<span className="required-mark" aria-hidden="true"> *</span></label>
+                  <label className="modal-label">
+                    Description
+                    <span className="required-mark" aria-hidden="true">
+                      {" "}
+                      *
+                    </span>
+                  </label>
                   <textarea
                     className="modal-input modal-textarea"
                     rows={2}
@@ -460,11 +624,17 @@ export default function ArticlesPage() {
                   />
                 </div>
                 <div className="form-field">
-                  <label className="modal-label">Catégorie<span className="required-mark" aria-hidden="true"> *</span></label>
+                  <label className="modal-label">
+                    Catégorie
+                    <span className="required-mark" aria-hidden="true">
+                      {" "}
+                      *
+                    </span>
+                  </label>
                   <select
                     className="modal-input"
                     value={form.categorieId}
-                    onChange={(e) => updateField("categorieId", Number(e.target.value))}
+                    onChange={(e) => updateField("categorieId", e.target.value)}
                     disabled={saving}
                     required
                   >
@@ -476,7 +646,13 @@ export default function ArticlesPage() {
                   </select>
                 </div>
                 <div className="form-field">
-                  <label className="modal-label">Unité<span className="required-mark" aria-hidden="true"> *</span></label>
+                  <label className="modal-label">
+                    Unité
+                    <span className="required-mark" aria-hidden="true">
+                      {" "}
+                      *
+                    </span>
+                  </label>
                   <select
                     className="modal-input"
                     value={form.unite}
@@ -485,7 +661,9 @@ export default function ArticlesPage() {
                     required
                   >
                     {UNITES.map((u) => (
-                      <option key={u} value={u}>{u}</option>
+                      <option key={u} value={u}>
+                        {u}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -512,7 +690,13 @@ export default function ArticlesPage() {
                   />
                 </div>
                 <div className="form-field">
-                  <label className="modal-label">Stock actuel<span className="required-mark" aria-hidden="true"> *</span></label>
+                  <label className="modal-label">
+                    Stock actuel
+                    <span className="required-mark" aria-hidden="true">
+                      {" "}
+                      *
+                    </span>
+                  </label>
                   <input
                     type="number"
                     min="0"
@@ -524,7 +708,13 @@ export default function ArticlesPage() {
                   />
                 </div>
                 <div className="form-field">
-                  <label className="modal-label">Stock minimum<span className="required-mark" aria-hidden="true"> *</span></label>
+                  <label className="modal-label">
+                    Stock minimum
+                    <span className="required-mark" aria-hidden="true">
+                      {" "}
+                      *
+                    </span>
+                  </label>
                   <input
                     type="number"
                     min="0"
@@ -540,11 +730,24 @@ export default function ArticlesPage() {
               {formError && <p className="modal-error">{formError}</p>}
 
               <div className="modal-actions">
-                <button type="button" className="btn btn-ghost" onClick={closeModal} disabled={saving}>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={closeModal}
+                  disabled={saving}
+                >
                   Annuler
                 </button>
-                <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? "…" : modal.mode === "add" ? "Ajouter" : "Enregistrer"}
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={saving}
+                >
+                  {saving
+                    ? "…"
+                    : modal.mode === "add"
+                    ? "Ajouter"
+                    : "Enregistrer"}
                 </button>
               </div>
             </form>
@@ -552,40 +755,87 @@ export default function ArticlesPage() {
         </div>
       )}
 
+      {/* MODALE VISUALISATION */}
       {viewTarget && (
-        <div className={`modal-overlay${viewTarget.closing ? " is-closing" : ""}`} onClick={closeViewModal}>
+        <div
+          className={`modal-overlay${viewTarget.closing ? " is-closing" : ""}`}
+          onClick={closeViewModal}
+        >
           <div
-            className={`modal-box modal-box-wide${viewTarget.closing ? " is-closing" : ""}`}
+            className={`modal-box modal-box-wide${
+              viewTarget.closing ? " is-closing" : ""
+            }`}
             role="dialog"
             aria-modal="true"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="view-header">
               <h2 className="modal-title">{viewTarget.nom}</h2>
-              <span className={`stock-badge stock-badge-${getStockStatus(viewTarget)}`}>
+              <span
+                className={`stock-badge stock-badge-${getStockStatus(
+                  viewTarget
+                )}`}
+              >
                 {getStockStatus(viewTarget) === "rupture" && "Rupture"}
                 {getStockStatus(viewTarget) === "faible" && "Stock faible"}
                 {getStockStatus(viewTarget) === "ok" && "En stock"}
               </span>
             </div>
             <dl className="view-grid">
-              <div className="view-item"><dt>Référence</dt><dd>{viewTarget.reference}</dd></div>
-              <div className="view-item"><dt>Catégorie</dt><dd>{viewTarget.categorie}</dd></div>
-              <div className="view-item view-item-full"><dt>Description</dt><dd>{viewTarget.description || "—"}</dd></div>
-              <div className="view-item"><dt>Prix d'achat</dt><dd>{formatMontant(viewTarget.prixAchat)}</dd></div>
-              <div className="view-item"><dt>Prix de vente</dt><dd>{formatMontant(viewTarget.prixVente)}</dd></div>
-              <div className="view-item"><dt>Stock actuel</dt><dd>{viewTarget.stock} {viewTarget.unite}</dd></div>
-              <div className="view-item"><dt>Stock minimum</dt><dd>{viewTarget.stockMin} {viewTarget.unite}</dd></div>
-              <div className="view-item"><dt>Date de création</dt><dd>{formatDate(viewTarget.dateCreation)}</dd></div>
+              <div className="view-item">
+                <dt>Référence</dt>
+                <dd>{viewTarget.reference}</dd>
+              </div>
+              <div className="view-item">
+                <dt>Catégorie</dt>
+                <dd>{viewTarget.categorie}</dd>
+              </div>
+              <div className="view-item view-item-full">
+                <dt>Description</dt>
+                <dd>{viewTarget.description || "—"}</dd>
+              </div>
+              <div className="view-item">
+                <dt>Prix d'achat</dt>
+                <dd>{formatMontant(viewTarget.prixAchat)}</dd>
+              </div>
+              <div className="view-item">
+                <dt>Prix de vente</dt>
+                <dd>{formatMontant(viewTarget.prixVente)}</dd>
+              </div>
+              <div className="view-item">
+                <dt>Stock actuel</dt>
+                <dd>
+                  {viewTarget.stock} {viewTarget.unite}
+                </dd>
+              </div>
+              <div className="view-item">
+                <dt>Stock minimum</dt>
+                <dd>
+                  {viewTarget.stockMin} {viewTarget.unite}
+                </dd>
+              </div>
+              <div className="view-item">
+                <dt>Date de création</dt>
+                <dd>{formatDate(viewTarget.dateCreation)}</dd>
+              </div>
             </dl>
             <div className="modal-actions">
-              <button type="button" className="btn btn-ghost" onClick={closeViewModal}>Fermer</button>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={closeViewModal}
+              >
+                Fermer
+              </button>
               <button
                 type="button"
                 className="btn btn-primary"
                 onClick={() => {
                   closeViewModal();
-                  window.setTimeout(() => openEditModal(viewTarget), EXIT_DURATION);
+                  window.setTimeout(
+                    () => openEditModal(viewTarget),
+                    EXIT_DURATION
+                  );
                 }}
               >
                 Modifier
@@ -595,21 +845,41 @@ export default function ArticlesPage() {
         </div>
       )}
 
+      {/* MODALE SUPPRESSION */}
       {deleteTarget && (
-        <div className={`modal-overlay${deleteTarget.closing ? " is-closing" : ""}`} onClick={closeDeleteModal}>
+        <div
+          className={`modal-overlay${
+            deleteTarget.closing ? " is-closing" : ""
+          }`}
+          onClick={closeDeleteModal}
+        >
           <div
             className={`modal-box${deleteTarget.closing ? " is-closing" : ""}`}
-            role="alertdialog"
+            role="dialog"
             aria-modal="true"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 className="modal-title">Supprimer « {deleteTarget.nom} » ?</h2>
+            <h2 className="modal-title">Supprimer l'article ?</h2>
             <p className="modal-text">
-              Cette action est définitive et retirera cet article de ton inventaire.
+              Êtes-vous sûr de vouloir supprimer l'article{" "}
+              <strong>{deleteTarget.nom}</strong> ({deleteTarget.reference}) ?
+              Cette action est irréversible.
             </p>
             <div className="modal-actions">
-              <button type="button" className="btn btn-ghost" onClick={closeDeleteModal}>Annuler</button>
-              <button type="button" className="btn btn-danger" onClick={confirmDelete}>Supprimer</button>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={closeDeleteModal}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={confirmDelete}
+              >
+                Supprimer
+              </button>
             </div>
           </div>
         </div>

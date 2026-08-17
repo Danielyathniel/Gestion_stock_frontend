@@ -108,7 +108,7 @@ export default function LoginPage() {
             {loading ? "Connexion en cours…" : "Se connecter"}
           </button>
 
-          <p className="login-footer">StockFlow &mdash; Gestion de stock intelligente</p>
+          <p className="login-footer">Gestion de stock</p>
         </form>
       </main>
     </div>

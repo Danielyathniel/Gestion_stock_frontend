@@ -26,7 +26,7 @@ export default function CategoriesPage() {
   const [mounted, setMounted] = useState(false);
   const [pageError, setPageError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [deleteError, setDeleteError] = useState(null); // 🔴 NOUVEAU : pour l'erreur de suppression
+  const [deleteError, setDeleteError] = useState(null); 
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setMounted(true));
@@ -64,7 +64,7 @@ export default function CategoriesPage() {
 
   function showPageError(message) {
     setPageError(message);
-    window.setTimeout(() => setPageError(""), 4000);
+    window.setTimeout(() => setPageError(""), 3000);
   }
 
   const filteredCategories = useMemo(() => {
@@ -101,6 +101,10 @@ export default function CategoriesPage() {
     if (!trimmed) {
       setFormError("Le nom de la catégorie est obligatoire.");
       return;
+    }
+    if (trimmed.length < 3) {
+    setFormError("Le nom de la catégorie doit contenir au moins 3 caractères.");
+    return;
     }
     const hasAtLeastOneLetter = /[a-zA-ZÀ-ÿ]/.test(trimmed);
       if (!hasAtLeastOneLetter) {
