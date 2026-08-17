@@ -8,8 +8,7 @@ import {
   fetchNextReference,
 } from "../services/articleService";
 import { fetchCategories } from "../services/categorieService";
-import { PDFDownloadLink } from "@react-pdf/renderer";
-import ArticleReportPDF from "../components/reports/ArticleReportPDF";
+import api from "../services/api";
 import { exportToExcel } from "../services/export/exportService";
 import {
   MoreVertical,
@@ -266,6 +265,35 @@ export default function ArticlesPage() {
     }
   }
 
+  async function handleDownloadPDF() {
+    setShowPrintMenu(false);
+    setIsGenerating(true);
+    try {
+      const response = await api.get("/articles/export/pdf", {
+        responseType: "blob",
+      });
+
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+
+      const disposition = response.headers["content-disposition"];
+      const filename = disposition
+        ? disposition.split("filename=")[1]?.replace(/"/g, "")
+        : `RAPPORT_ARTICLES_${new Date().toISOString().split("T")[0]}.pdf`;
+
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Erreur génération PDF:", error);
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="articles-page">
@@ -329,26 +357,14 @@ export default function ArticlesPage() {
                     </button>
                   </div>
                   <div className="print-menu-options">
-                    <PDFDownloadLink
-                      document={
-                        <ArticleReportPDF
-                          articles={articles}
-                          entreprise="STOCKFLOW"
-                        />
-                      }
-                      fileName={`RAPPORT_ARTICLES_${
-                        new Date().toISOString().split("T")[0]
-                      }.pdf`}
+                    <button
+                      type="button"
                       className="print-option"
-                      onClick={() => setShowPrintMenu(false)}
+                      onClick={handleDownloadPDF}
                     >
-                      {({ loading: pdfLoading }) => (
-                        <>
-                          <FileText size={16} />
-                          <span>{pdfLoading ? "Génération..." : "PDF"}</span>
-                        </>
-                      )}
-                    </PDFDownloadLink>
+                      <FileText size={16} />
+                      <span>{isGenerating ? "Génération..." : "PDF"}</span>
+                    </button>
 
                     <button
                       type="button"

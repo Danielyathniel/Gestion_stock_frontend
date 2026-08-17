@@ -6,4 +6,12 @@ export default defineConfig({
   server: {
     port: 5175,
   },
+  optimizeDeps: {
+    include: [
+      "@react-pdf/renderer",
+      "@react-pdf/font",
+      "@react-pdf/pdfkit",
+      "react-pdf",
+    ],
+  },
 });
